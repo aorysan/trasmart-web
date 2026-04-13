@@ -1,65 +1,134 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Metadata } from "next";
+import styles from "./landingPage.module.scss";
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: "TrasMart - Convert Your Waste to Points",
+  description:
+    "Earn points by recycling plastic bottles and cans with TrasMart IoT vending machines",
+};
+
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className={styles.main}>
+      {/* Navbar */}
+      <nav className={styles.navbar}>
+        <div className={styles.navContent}>
+          <div className={styles.navBrand}>
+            <img
+              width="50"
+              src="https://img.icons8.com/wired/64/40C057/recycle-sign.png"
+              alt="recycle-sign"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+          <div className={styles.navLinks}>
+            <Link href="/auth/signin" className={styles.signIn}>
+              Sign In
+            </Link>
+            <Link href="/auth/signup" className={styles.signUp}>
+              Sign Up
+            </Link>
+          </div>
         </div>
-      </main>
+      </nav>
+
+      {/* Hero Section */}
+      <section className={styles.heroSection}>
+        <div className={styles.heroGrid}>
+          <div className={styles.heroContent}>
+            <h2>
+              Turn Your Trash Into{" "}
+              <span className={styles.highlight}>Points</span>
+            </h2>
+            <p>
+              Recycle plastic bottles and cans with our smart IoT vending
+              machines and earn points instantly. Redeem your points for amazing
+              rewards!
+            </p>
+            <div className={styles.buttonGroup}>
+              <Link href="/auth/signup" className={styles.primaryBtn}>
+                Get Started
+              </Link>
+              <Link href="#features" className={styles.secondaryBtn}>
+                Learn More
+              </Link>
+            </div>
+          </div>
+          <div className={styles.heroImage}>
+            <div className={styles.imageWrapper}>
+              <img
+                width="150"
+                src="https://img.icons8.com/wired/120/40C057/recycle-sign.png"
+                alt="recycle-sign"
+              />
+            </div>
+            <p>Join thousands of users making a difference</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className={styles.featuresSection}>
+        <div className={styles.featuresContent}>
+          <h3 className={styles.featuresTitle}>Why Choose TrasMart?</h3>
+          <div className={styles.featuresGrid}>
+            {[
+              {
+                icon: "🤖",
+                title: "Smart IoT Machines",
+                desc: "Automated detection of plastic bottles and cans",
+              },
+              {
+                icon: "⭐",
+                title: "Earn Points Instantly",
+                desc: "Get rewarded immediately for each recycle",
+              },
+              {
+                icon: "🎁",
+                title: "Amazing Rewards",
+                desc: "Redeem points for products and discounts",
+              },
+              {
+                icon: "📊",
+                title: "Track Progress",
+                desc: "View your points, history, and achievements",
+              },
+              {
+                icon: "🌍",
+                title: "Help Environment",
+                desc: "Make a positive impact on the planet",
+              },
+              {
+                icon: "👥",
+                title: "Community",
+                desc: "Compete and collaborate with other users",
+              },
+            ].map((feature, idx) => (
+              <div key={idx} className={styles.featureCard}>
+                <div className={styles.icon}>{feature.icon}</div>
+                <h4>{feature.title}</h4>
+                <p>{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className={styles.ctaSection}>
+        <div className={styles.ctaContent}>
+          <h3>Ready to Start Making a Difference?</h3>
+          <p>Join TrasMart today and start earning points!</p>
+          <Link href="/auth/signup">Create Account Now</Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className={styles.footer}>
+        <div className={styles.footerContent}>
+          <p>&copy; 2024 TrasMart. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }

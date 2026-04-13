@@ -1,0 +1,379 @@
+// Color variables
+$primary-green: #40c057;
+$light-green: #f0fdf4;
+$dark-green: #166534;
+$white: #ffffff;
+$gray-50: #f9fafb;
+$gray-100: #f3f4f6;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+$dark-bg-primary: #111827;
+$dark-bg-secondary: #1f2937;
+$dark-bg-tertiary: #374151;
+
+// Breakpoints
+$mobile: 640px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// Container class
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+
+  @media (min-width: $mobile) {
+    padding: 0 1.5rem;
+  }
+
+  @media (min-width: $tablet) {
+    padding: 0 2rem;
+  }
+}
+
+// Main page wrapper
+.main {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, $light-green, $white);
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(
+      to bottom,
+      $dark-bg-primary,
+      $dark-bg-secondary
+    );
+  }
+}
+
+// Navbar styles
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: $white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    background-color: $dark-bg-primary;
+  }
+
+  .navContent {
+    @extend .container;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 4rem;
+  }
+
+  .navBrand {
+    display: flex;
+    align-items: center;
+
+    img {
+      width: 50px;
+      height: auto;
+    }
+  }
+
+  .navLinks {
+    display: flex;
+    gap: 1rem;
+
+    a {
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+
+      &.signIn {
+        color: $gray-700;
+
+        @media (prefers-color-scheme: dark) {
+          color: $gray-300;
+        }
+
+        &:hover {
+          color: $primary-green;
+        }
+      }
+
+      &.signUp {
+        background-color: $primary-green;
+        color: $white;
+        border-radius: 0.5rem;
+
+        &:hover {
+          background-color: $dark-green;
+        }
+      }
+    }
+  }
+}
+
+// Hero section
+.heroSection {
+  @extend .container;
+  padding: 5rem 1rem;
+
+  @media (min-width: $tablet) {
+    padding: 5rem 2rem;
+  }
+}
+
+.heroGrid {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+
+  @media (min-width: $tablet) {
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+}
+
+.heroContent {
+  h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    color: $gray-900;
+
+    @media (min-width: $tablet) {
+      font-size: 3rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      color: $white;
+    }
+
+    .highlight {
+      color: $primary-green;
+    }
+  }
+
+  p {
+    font-size: 1.25rem;
+    color: $gray-600;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+
+    @media (prefers-color-scheme: dark) {
+      color: $gray-300;
+    }
+  }
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  a {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+
+    &.primaryBtn {
+      background-color: $primary-green;
+      color: $white;
+
+      &:hover {
+        background-color: $dark-green;
+      }
+    }
+
+    &.secondaryBtn {
+      border: 2px solid $primary-green;
+      color: $primary-green;
+      background-color: transparent;
+
+      &:hover {
+        background-color: $light-green;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        &:hover {
+          background-color: $dark-bg-secondary;
+        }
+      }
+    }
+  }
+}
+
+.heroImage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+
+  .imageWrapper {
+    margin-bottom: 2rem;
+
+    img {
+      width: 150px;
+      height: auto;
+      filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.1));
+    }
+  }
+
+  p {
+    font-size: 1.125rem;
+    color: $gray-600;
+    text-align: center;
+    padding: 0 1rem;
+
+    @media (prefers-color-scheme: dark) {
+      color: $gray-400;
+    }
+  }
+}
+
+// Features section
+.featuresSection {
+  background-color: $gray-100;
+  padding: 5rem 1rem;
+
+  @media (min-width: $tablet) {
+    padding: 5rem 2rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    background-color: $dark-bg-secondary;
+  }
+}
+
+.featuresContent {
+  @extend .container;
+}
+
+.featuresTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: $gray-900;
+
+  @media (prefers-color-scheme: dark) {
+    color: $white;
+  }
+}
+
+.featuresGrid {
+  display: grid;
+  gap: 2rem;
+
+  @media (min-width: $tablet) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.featureCard {
+  background-color: $white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: $dark-bg-tertiary;
+  }
+
+  &:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .icon {
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: $gray-900;
+
+    @media (prefers-color-scheme: dark) {
+      color: $white;
+    }
+  }
+
+  p {
+    color: $gray-600;
+
+    @media (prefers-color-scheme: dark) {
+      color: $gray-400;
+    }
+  }
+}
+
+// CTA section
+.ctaSection {
+  background-color: $primary-green;
+  padding: 4rem 1rem;
+  text-align: center;
+
+  @media (min-width: $tablet) {
+    padding: 4rem 2rem;
+  }
+}
+
+.ctaContent {
+  @extend .container;
+
+  h3 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: $white;
+    margin-bottom: 1.5rem;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+    font-size: 1.125rem;
+  }
+
+  a {
+    padding: 0.75rem 2rem;
+    background-color: $white;
+    color: $primary-green;
+    text-decoration: none;
+    border-radius: 0.5rem;
+    display: inline-block;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: $gray-100;
+    }
+  }
+}
+
+// Footer
+.footer {
+  background-color: $gray-900;
+  color: $gray-400;
+  padding: 2rem 1rem;
+
+  @media (min-width: $tablet) {
+    padding: 2rem 2rem;
+  }
+
+  .footerContent {
+    @extend .container;
+    text-align: center;
+
+    p {
+      margin: 0;
+    }
+  }
+}

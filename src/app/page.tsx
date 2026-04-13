@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Metadata } from "next";
 import styles from "./landingPage.module.scss";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "TrasMart - Convert Your Waste to Points",
@@ -16,8 +17,9 @@ export default function LandingPage() {
         <div className={styles.navContent}>
           <div className={styles.navBrand}>
             <img
-              width="50"
-              src="https://img.icons8.com/wired/64/40C057/recycle-sign.png"
+              width="100"
+              height="100"
+              src="https://img.icons8.com/stickers/100/recycle-sign.png"
               alt="recycle-sign"
             />
           </div>
@@ -56,11 +58,7 @@ export default function LandingPage() {
           </div>
           <div className={styles.heroImage}>
             <div className={styles.imageWrapper}>
-              <img
-                width="150"
-                src="https://img.icons8.com/wired/120/40C057/recycle-sign.png"
-                alt="recycle-sign"
-              />
+              <Image width="150" height="150" src="/landing-image.svg" alt="landing-sign" />
             </div>
             <p>Join thousands of users making a difference</p>
           </div>

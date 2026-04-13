@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "./context/themeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,14 +24,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        />
-      </head>
-      <body>{children}</body>
+    <html data-theme="light">
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
+  // return (
+  //   <html lang="en">
+  //     <head>
+  //       <link
+  //         rel="stylesheet"
+  //         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  //       />
+  //     </head>
+  //     <body>{children}</body>
+  //   </html>
+  // );
 }

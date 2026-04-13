@@ -1,5 +1,5 @@
 // Color variables
-$primary-green: #40c057;
+$primary-green: #739f4d;
 $light-green: #f0fdf4;
 $dark-green: #166534;
 $white: #ffffff;
@@ -39,14 +39,7 @@ $desktop: 1024px;
 .main {
   min-height: 100vh;
   background: linear-gradient(to bottom, $light-green, $white);
-
-  @media (prefers-color-scheme: dark) {
-    background: linear-gradient(
-      to bottom,
-      $dark-bg-primary,
-      $dark-bg-secondary
-    );
-  }
+  color: $gray-900;
 }
 
 // Navbar styles
@@ -56,10 +49,6 @@ $desktop: 1024px;
   z-index: 50;
   background-color: $white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-  @media (prefers-color-scheme: dark) {
-    background-color: $dark-bg-primary;
-  }
 
   .navContent {
     @extend .container;
@@ -90,10 +79,6 @@ $desktop: 1024px;
 
       &.signIn {
         color: $gray-700;
-
-        @media (prefers-color-scheme: dark) {
-          color: $gray-300;
-        }
 
         &:hover {
           color: $primary-green;
@@ -146,10 +131,6 @@ $desktop: 1024px;
       font-size: 3rem;
     }
 
-    @media (prefers-color-scheme: dark) {
-      color: $white;
-    }
-
     .highlight {
       color: $primary-green;
     }
@@ -160,10 +141,6 @@ $desktop: 1024px;
     color: $gray-600;
     margin-bottom: 2rem;
     line-height: 1.6;
-
-    @media (prefers-color-scheme: dark) {
-      color: $gray-300;
-    }
   }
 }
 
@@ -197,12 +174,6 @@ $desktop: 1024px;
       &:hover {
         background-color: $light-green;
       }
-
-      @media (prefers-color-scheme: dark) {
-        &:hover {
-          background-color: $dark-bg-secondary;
-        }
-      }
     }
   }
 }
@@ -216,10 +187,10 @@ $desktop: 1024px;
 
   .imageWrapper {
     margin-bottom: 2rem;
-
     img {
-      width: 150px;
+      width: 95%;
       height: auto;
+      object-fit: contain;
       filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.1));
     }
   }
@@ -229,10 +200,6 @@ $desktop: 1024px;
     color: $gray-600;
     text-align: center;
     padding: 0 1rem;
-
-    @media (prefers-color-scheme: dark) {
-      color: $gray-400;
-    }
   }
 }
 
@@ -243,10 +210,6 @@ $desktop: 1024px;
 
   @media (min-width: $tablet) {
     padding: 5rem 2rem;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    background-color: $dark-bg-secondary;
   }
 }
 
@@ -260,10 +223,6 @@ $desktop: 1024px;
   text-align: center;
   margin-bottom: 3rem;
   color: $gray-900;
-
-  @media (prefers-color-scheme: dark) {
-    color: $white;
-  }
 }
 
 .featuresGrid {
@@ -282,10 +241,6 @@ $desktop: 1024px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s ease;
 
-  @media (prefers-color-scheme: dark) {
-    background-color: $dark-bg-tertiary;
-  }
-
   &:hover {
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   }
@@ -300,18 +255,10 @@ $desktop: 1024px;
     font-weight: 600;
     margin-bottom: 0.5rem;
     color: $gray-900;
-
-    @media (prefers-color-scheme: dark) {
-      color: $white;
-    }
   }
 
   p {
     color: $gray-600;
-
-    @media (prefers-color-scheme: dark) {
-      color: $gray-400;
-    }
   }
 }
 

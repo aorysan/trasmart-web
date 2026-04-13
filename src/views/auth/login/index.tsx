@@ -3,8 +3,6 @@
 
 import styles from "./login.module.scss";
 import { useState } from "react";
-// import { FontAwosomeIcon } from "@fortawesome/react-fontawesome";
-// import { faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -26,9 +24,13 @@ export default function LoginPage() {
     <div className={styles.loginContainer}>
       <div className={styles.loginCard}>
         <div className={styles.loginCard_header}>
-          <i className="fas fa-layer-group"></i>
+          <img
+            width="80"
+            src="https://img.icons8.com/stickers/100/recycle-sign.png"
+            alt="recycle-sign"
+          />
           <h1>Welcome Back</h1>
-          <p>please sign in to continue</p>
+          <p>please enter your credentials to sign in.</p>
           <div className={styles.loginCard_socials}>
             <ul>
               <li>
@@ -60,7 +62,7 @@ export default function LoginPage() {
               </li>
             </ul>
           </div>
-          <div className={styles.loginHeader_divider}>
+          <div className={styles.loginCard_divider}>
             <span>or</span>
           </div>
         </div>
@@ -73,25 +75,42 @@ export default function LoginPage() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
             <div className={styles.loginCard_form_group}>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                    <img width="25"  src="https://img.icons8.com/sf-black-filled/64/visible.png" alt="visible"/>
+                </button>
+              </div>
             </div>
+            <div className={styles.loginCard_form_options}>
+              <label className={styles.rememberMe}>
+                <input type="checkbox" />
+                Remember me
+              </label>
+              <a href="">Forgot password?</a>
+            </div>
+            <button type="submit" className={styles.loginCard_form_submitBtn}>
+              Sign In
+            </button>
           </form>
-          <div className={styles.loginCard_form_options}>
-            <label className={styles.rememberMe}>
-              <input type="checkbox" />
-              Remember me
-            </label>
-            <a href="">Forgot password?</a>
-          </div>
+        </div>
+        <div className={styles.loginCard_signUpLink}>
+          Dont have an account? <a href="/auth/register">Sign Up</a>
         </div>
       </div>
     </div>

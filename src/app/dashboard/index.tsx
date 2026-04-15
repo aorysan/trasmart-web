@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Coins, Recycle, Leaf, MapPin, Bell } from "lucide-react";
+import { Recycle, Leaf, MapPin, Bell, HandCoins  } from "lucide-react";
 import styles from "./dashboard.module.scss";
 
 export default function DashboardPage() {
@@ -91,24 +91,24 @@ export default function DashboardPage() {
             <div className={styles.historyContainer}>
               <div className={styles.historyItem}>
                 <div className={styles.historyIconRecycle}>
-                  <Recycle size={20} />
+                  <HandCoins size={20} />
                 </div>
                 <div className={styles.historyInfo}>
                   <p className={styles.historyTitle}>Botol Plastik</p>
                   <p className={styles.historyMeta}>
-                    <MapPin size={12} /> Mesin TrasMart FEB • 16:30
+                    <MapPin size={12} />TrasMart Kantin TI • 16:30
                   </p>
                 </div>
                 <p className={styles.historyPoints}>+15 Pts</p>
               </div>
               <div className={styles.historyItem}>
                 <div className={styles.historyIconCoin}>
-                  <Coins size={20} />
+                  <HandCoins size={20} />
                 </div>
                 <div className={styles.historyInfo}>
                   <p className={styles.historyTitle}>Botol Kaleng (Metal)</p>
                   <p className={styles.historyMeta}>
-                    <MapPin size={12} /> Mesin TrasMart FEB • 16:28
+                    <MapPin size={12} />TrasMart Kantin TI • 16:28
                   </p>
                 </div>
                 <p className={styles.historyPoints}>+20 Pts</p>

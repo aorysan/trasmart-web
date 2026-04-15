@@ -20,7 +20,14 @@ export default function RegisterPage() {
         {/* ── LEFT PANEL ── */}
         <div className={styles.leftPanel}>
           {/* Logo */}
-          <div className={styles.logoBadge}>TrasMart</div>
+          <div className={styles.logoBadge}>
+            <Image
+              width="30"
+              height="30"
+              src="/icon.png"
+              alt="recycle-sign"
+            />
+          </div>
 
           {/* Heading */}
           <div className={styles.headingSection}>
@@ -189,13 +196,11 @@ export default function RegisterPage() {
 
         {/* ── RIGHT PANEL ── */}
         <div className={styles.rightPanel}>
-          {/* Background image */}
           <Image
             src="/register-image.svg"
             alt="register-image"
             fill
             className={styles.rightPanelImage}
-            priority
           />
         </div>
       </div>

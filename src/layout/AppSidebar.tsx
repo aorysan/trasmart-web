@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Coins,
@@ -12,6 +13,7 @@ import {
   BaggageClaim,
 } from "lucide-react";
 import styles from "./AppSidebar.module.scss";
+import { useRouter, usePathname } from "next/navigation";
 
 type NavItem = { name: string; path: string; icon: React.ReactNode };
 
@@ -21,7 +23,6 @@ const navItems: NavItem[] = [
     path: "/dashboard",
     icon: <LayoutDashboard size={20} />,
   },
-  { name: "My Points", path: "/my-points", icon: <Coins size={20} /> },
   { name: "Reward", path: "/reward", icon: <BaggageClaim size={20} /> },
   { name: "Account", path: "/profile", icon: <User size={20} /> },
   { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
@@ -31,7 +32,8 @@ const AppSidebar: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [pathname, setPathname] = useState("/dashboard");
+  const pathname = usePathname();
+  const router = useRouter();
 
   const isOpen = isExpanded || isHovered || isMobileOpen;
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
@@ -49,7 +51,7 @@ const AppSidebar: React.FC = () => {
               }`}
               onClick={(e) => {
                 e.preventDefault();
-                setPathname(nav.path);
+                router.push(nav.path);
                 if (isMobileOpen) toggleMobileSidebar();
               }}
             >
@@ -84,7 +86,12 @@ const AppSidebar: React.FC = () => {
         {/* Brand Logo */}
         <div className={styles.brandSection}>
           <div className={styles.brandIcon}>
-            <Recycle size={24} />
+            <Image
+              width="35"
+              height="35"
+              src="/icon.png"
+              alt="logo-sign"
+            />
           </div>
           {isOpen && <h1 className={styles.brandText}>TrasMart</h1>}
         </div>

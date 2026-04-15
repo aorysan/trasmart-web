@@ -27,10 +27,10 @@ export default function LandingPage() {
             <h1>TrasMart</h1>
           </div>
           <div className={styles.navLinks}>
-            <Link href="/auth/signin" className={styles.signIn}>
+            <Link href="/auth/login" className={styles.signIn}>
               Sign In
             </Link>
-            <Link href="/auth/signup" className={styles.signUp}>
+            <Link href="/auth/register" className={styles.signUp}>
               Sign Up
             </Link>
           </div>

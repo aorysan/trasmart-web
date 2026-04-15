@@ -1,8 +1,10 @@
+﻿@use "../../components/theme/tokens" as *;
+
 /* Dashboard Route Layout */
 .dashboardLayout {
   display: flex;
   height: 100vh;
-  background: #f4fff8;
+  background: $bgPage;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
@@ -30,7 +32,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #f4fff8;
+  background: $bgPage;
 
   @media (max-width: 767px) {
     width: 100%;
@@ -91,7 +93,7 @@
 .topbarContent h2 {
   font-size: 1.875rem;
   font-weight: bold;
-  color: #166534;
+  color: $dark-green;
   margin: 0;
 
   @media (min-width: 1024px) {
@@ -100,7 +102,7 @@
 }
 
 .topbarContent p {
-  color: #6b7280;
+  color: $textLight;
   margin-top: 0.25rem;
   font-size: 0.875rem;
 
@@ -110,13 +112,13 @@
 }
 
 .notificationBtn {
-  background: white;
+  background: $white;
   padding: 0.75rem;
   border-radius: 9999px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   position: relative;
-  color: #166534;
-  border: 1px solid #f3f4f6;
+  color: $dark-green;
+  border: 1px solid $gray-100;
   cursor: pointer;
   transition: box-shadow 0.2s;
 
@@ -129,11 +131,11 @@
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: #ef4444;
+  background: $errorColor;
   width: 0.625rem;
   height: 0.625rem;
   border-radius: 9999px;
-  border: 2px solid white;
+  border: 2px solid $white;
 }
 
 /* Grid Layout */
@@ -162,10 +164,10 @@
 
 /* Card Styling */
 .card {
-  background: white;
+  background: $white;
   border-radius: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #d1d5db;
+  border: 1px solid $gray-300;
 }
 
 .bannerCard {
@@ -206,7 +208,7 @@
 }
 
 .bannerLabel {
-  color: #9ca3af;
+  color: $textGray;
   font-weight: 500;
   margin-bottom: 0.5rem;
   margin: 0;
@@ -221,18 +223,18 @@
 .balanceAmount {
   font-size: 3rem;
   font-weight: 900;
-  color: #166534;
+  color: $dark-green;
 }
 
 .balanceUnit {
   font-size: 1.25rem;
   font-weight: bold;
-  color: #6fa898;
+  color: $accentColor;
 }
 
 .balanceDescription {
   font-size: 0.875rem;
-  color: #9ca3af;
+  color: $textGray;
   margin-top: 0.5rem;
   margin: 0;
 }
@@ -240,7 +242,7 @@
 .bannerDivider {
   height: 4rem;
   width: 1px;
-  background: #f3f4f6;
+  background: $gray-100;
   display: none;
 
   @media (min-width: 768px) {
@@ -260,7 +262,7 @@
 }
 
 .impactCard {
-  background: #f0f7f4;
+  background: $bgMintSoft;
   padding: 1rem;
   border-radius: 1rem;
   flex: 1;
@@ -275,7 +277,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #166534;
+  color: $dark-green;
   margin-bottom: 0.25rem;
   font-size: 0.75rem;
   font-weight: 600;
@@ -284,14 +286,14 @@
 .impactValue {
   font-size: 1.125rem;
   font-weight: bold;
-  color: #166534;
+  color: $dark-green;
   margin: 0;
 }
 
 .impactValueSmall {
   font-size: 0.75rem;
   font-weight: normal;
-  color: #6b7280;
+  color: $textLight;
 }
 
 /* Chart Card */
@@ -314,23 +316,23 @@
 .chartTitle h3 {
   font-size: 1.25rem;
   font-weight: bold;
-  color: #166534;
+  color: $dark-green;
   margin: 0;
 }
 
 .chartSubtitle {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: $textLight;
   margin-top: 0.25rem;
   margin: 0;
 }
 
 .chartSelect {
-  background: #f9fafb;
+  background: $gray-50;
   border: none;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #4b5563;
+  color: $gray-600;
   border-radius: 0.5rem;
   padding: 0.5rem;
   outline: none;
@@ -357,7 +359,7 @@
   height: 100%;
 
   &:hover .bar {
-    background-color: #9ecfb9;
+    background-color: $accentLight;
   }
 }
 
@@ -367,11 +369,11 @@
   transition: all 0.3s;
 
   &.active {
-    background-color: #166534;
+    background-color: $dark-green;
   }
 
   &:not(.active) {
-    background-color: #e5e7eb;
+    background-color: $borderColor;
   }
 }
 
@@ -391,40 +393,40 @@
 
 .historyTitle {
   font-weight: bold;
-  color: #374151;
+  color: $textMedium;
   margin: 0;
 }
 
 .historyMoreBtn {
-  color: #9ca3af;
+  color: $textGray;
   border: none;
   background: transparent;
   cursor: pointer;
   font-weight: bold;
 
   &:hover {
-    color: #4b5563;
+    color: $gray-600;
   }
 }
 
 .historyContainer {
-  background: white;
+  background: $white;
   border-radius: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f3f4f6;
+  border: 1px solid $gray-100;
   overflow: hidden;
 }
 
 .historyItem {
   padding: 1rem;
-  border-bottom: 1px solid #f9fafb;
+  border-bottom: 1px solid $gray-50;
   display: flex;
   align-items: center;
   justify-content: space-between;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #f9fafb;
+    background-color: $gray-50;
   }
 
   &:last-child {
@@ -439,19 +441,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: $white;
   flex-shrink: 0;
   margin-right: 1rem;
 }
 
 .historyIconRecycle {
   @extend .historyIconContainer;
-  background: #6fa898;
+  background: $accentColor;
 }
 
 .historyIconCoin {
   @extend .historyIconContainer;
-  background: #9ecfb9;
+  background: $accentLight;
 }
 
 .historyInfo {
@@ -460,13 +462,13 @@
 
 .historyTitle {
   font-weight: 600;
-  color: #1f2937;
+  color: $gray-800;
   margin: 0;
 }
 
 .historyMeta {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: $textGray;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -476,7 +478,7 @@
 
 .historyPoints {
   font-weight: bold;
-  color: #166534;
+  color: $dark-green;
   margin: 0;
   white-space: nowrap;
 }
@@ -495,12 +497,12 @@
   left: 0;
   width: 100%;
   height: 0.25rem;
-  background: linear-gradient(to right, #9ecfb9, #166534);
+  background: linear-gradient(to right, $accentLight, $dark-green);
 }
 
 .statusTitle {
   font-weight: bold;
-  color: #1f2937;
+  color: $gray-800;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -519,7 +521,7 @@
 .machineName {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #4b5563;
+  color: $gray-600;
   margin: 0;
 }
 
@@ -529,8 +531,8 @@
   gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: bold;
-  color: #166534;
-  background: #f0f7f4;
+  color: $dark-green;
+  background: $bgMintSoft;
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
 }
@@ -548,7 +550,7 @@
   width: 100%;
   height: 100%;
   border-radius: 9999px;
-  background: #6fa898;
+  background: $accentColor;
   opacity: 0.75;
   animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
@@ -559,19 +561,19 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background: #6fa898;
+  background: $accentColor;
 }
 
 .capacityBar {
   width: 100%;
-  background: #f3f4f6;
+  background: $gray-100;
   border-radius: 9999px;
   height: 0.5rem;
   margin-top: 0.5rem;
 }
 
 .capacityFill {
-  background: #166534;
+  background: $dark-green;
   height: 0.5rem;
   border-radius: 9999px;
   transition: all 2s;
@@ -579,7 +581,7 @@
 
 .capacityText {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: $textGray;
   margin-top: 0.25rem;
   text-align: right;
   margin: 0;
@@ -593,7 +595,7 @@
 
 .pointsSourceTitle {
   font-weight: bold;
-  color: #1f2937;
+  color: $gray-800;
   margin-bottom: 1.5rem;
   margin: 0;
   font-size: 1rem;
@@ -620,17 +622,17 @@
 
 .pointsSourceLabel {
   font-weight: 500;
-  color: #4b5563;
+  color: $gray-600;
 }
 
 .pointsSourceAmount {
   font-weight: bold;
-  color: #166534;
+  color: $dark-green;
 }
 
 .pointsProgressBar {
   width: 100%;
-  background: #f3f4f6;
+  background: $gray-100;
   border-radius: 9999px;
   height: 0.5rem;
 }
@@ -640,21 +642,21 @@
   border-radius: 9999px;
 
   &.plastic {
-    background: #6fa898;
+    background: $accentColor;
   }
 
   &.metal {
-    background: #9ecfb9;
+    background: $accentLight;
   }
 }
 
 /* CTA Card */
 .ctaCard {
-  background: #166534;
+  background: $dark-green;
   border-radius: 1.5rem;
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  color: white;
+  color: $white;
   position: relative;
   overflow: hidden;
 }
@@ -677,7 +679,7 @@
 
 .ctaDescription {
   font-size: 0.875rem;
-  color: #9ecfb9;
+  color: $accentLight;
   margin-bottom: 1rem;
   position: relative;
   z-index: 10;
@@ -696,15 +698,15 @@
 }
 
 .ctaProgressFill {
-  background: #9ecfb9;
+  background: $accentLight;
   height: 0.5rem;
   border-radius: 9999px;
 }
 
 .ctaButton {
   width: 100%;
-  background: #9ecfb9;
-  color: #166534;
+  background: $accentLight;
+  color: $dark-green;
   font-weight: bold;
   padding: 0.75rem;
   border-radius: 0.75rem;
@@ -716,8 +718,8 @@
   transition: all 0.2s;
 
   &:hover {
-    background: #6fa898;
-    color: white;
+    background: $accentColor;
+    color: $white;
   }
 }
 
@@ -728,3 +730,4 @@
     opacity: 0;
   }
 }
+

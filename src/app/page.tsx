@@ -51,7 +51,7 @@ export default function LandingPage() {
               rewards!
             </p>
             <div className={styles.buttonGroup}>
-              <Link href="/auth/signup" className={styles.primaryBtn}>
+              <Link href="/auth/register" className={styles.primaryBtn}>
                 Get Started
               </Link>
               <Link href="#features" className={styles.secondaryBtn}>
@@ -125,7 +125,7 @@ export default function LandingPage() {
         <div className={styles.ctaContent}>
           <h3>Ready to Start Making a Difference?</h3>
           <p>Join TrasMart today and start earning points!</p>
-          <Link href="/auth/signup">Create Account Now</Link>
+          <Link href="/auth/register">Create Account Now</Link>
         </div>
       </section>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { SidebarProvider } from "@/context/SidebarContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import AppSidebar from "@/layout/AppSidebar";
 import { Recycle, Leaf, MapPin, Bell, HandCoins } from "lucide-react";
 import styles from "./dashboard.module.scss";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { SidebarProvider } from "@/context/SidebarContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import AppSidebar from "@/layout/AppSidebar";
 import { BookOpen, ShoppingBag, Bell } from "lucide-react";
 import styles from "./reward.module.scss";
@@ -128,7 +128,9 @@ export default function RewardRoute() {
                     onClick={() => setSelectedCategory(category.id)}
                   >
                     <span>{category.label}</span>
-                    <span className={styles.categoryCount}>{category.count}</span>
+                    <span className={styles.categoryCount}>
+                      {category.count}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -147,11 +149,15 @@ export default function RewardRoute() {
 
                   <div className={styles.rewardBody}>
                     <h3 className={styles.rewardName}>{reward.name}</h3>
-                    <p className={styles.rewardDescription}>{reward.description}</p>
+                    <p className={styles.rewardDescription}>
+                      {reward.description}
+                    </p>
 
                     <div className={styles.rewardFooter}>
                       <div className={styles.pointsRequired}>
-                        <span className={styles.pointsValue}>{reward.points}</span>
+                        <span className={styles.pointsValue}>
+                          {reward.points}
+                        </span>
                         <span className={styles.pointsLabel}>pts</span>
                       </div>
                       <button
@@ -163,7 +169,9 @@ export default function RewardRoute() {
                         onClick={() => handleRedeem(reward)}
                         disabled={currentPoints < reward.points}
                       >
-                        {currentPoints < reward.points ? "Tidak Cukup" : "Tukar"}
+                        {currentPoints < reward.points
+                          ? "Tidak Cukup"
+                          : "Tukar"}
                       </button>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { SidebarProvider } from "@/context/SidebarContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import AppSidebar from "@/layout/AppSidebar";
 import {
   User,
@@ -104,7 +104,9 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>Nama Lengkap</p>
-                          <p className={styles.detailValue}>{profile.fullName}</p>
+                          <p className={styles.detailValue}>
+                            {profile.fullName}
+                          </p>
                         </div>
                       </div>
 
@@ -134,7 +136,9 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>Alamat</p>
-                          <p className={styles.detailValue}>{profile.address}</p>
+                          <p className={styles.detailValue}>
+                            {profile.address}
+                          </p>
                         </div>
                       </div>
                       <button className={styles.editBtn} onClick={handleEdit}>
@@ -204,7 +208,10 @@ export default function AccountRoute() {
                           <Check size={18} />
                           Simpan Perubahan
                         </button>
-                        <button className={styles.cancelBtn} onClick={handleCancel}>
+                        <button
+                          className={styles.cancelBtn}
+                          onClick={handleCancel}
+                        >
                           <X size={18} />
                           Batal
                         </button>
@@ -234,7 +241,9 @@ export default function AccountRoute() {
                 <div className={styles.actionsCard}>
                   <h3 className={styles.actionsTitle}>Aksi Cepat</h3>
                   <button className={styles.actionBtn}>Ubah Password</button>
-                  <button className={styles.actionBtn}>Preferensi Notifikasi</button>
+                  <button className={styles.actionBtn}>
+                    Preferensi Notifikasi
+                  </button>
                   <button className={styles.actionBtn + " " + styles.dangerBtn}>
                     Logout
                   </button>

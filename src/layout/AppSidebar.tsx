@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import styles from "./AppSidebar.module.scss";
 import { useRouter, usePathname } from "next/navigation";
-import { useSidebar } from "@/context/SidebarContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 type NavItem = { name: string; path: string; icon: React.ReactNode };
 

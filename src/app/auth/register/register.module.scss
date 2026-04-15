@@ -1,4 +1,5 @@
-﻿@use "../../../components/theme/tokens" as *;
+﻿@use "../../components/theme/tokens" as *;
+@use "sass:color";
 
 /* Main Container */
 .registerContainer {
@@ -176,14 +177,14 @@
   transition:
     opacity 0.2s ease,
     transform 0.1s ease;
-  background-color: $accentColor;
+  background-color: $dark-green;
   color: $white;
   border: none;
   cursor: pointer;
   margin-top: 0.25rem;
 
   &:hover {
-    opacity: 0.9;
+    background-color: color.adjust($dark-green, $lightness: -10%);
   }
 
   &:active {

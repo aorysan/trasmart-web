@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+SUPABASE_BEST_PRACTICES.md
+SUPABASE_QUICK_REFERENCE.md
+SUPABASE_SETUP_GUIDE.md
 
 # next.js
 /.next/
@@ -32,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+env.local
 
 # vercel
 .vercel

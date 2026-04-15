@@ -51,7 +51,7 @@ export default function LandingPage() {
               rewards!
             </p>
             <div className={styles.buttonGroup}>
-              <Link href="/auth/register" className={styles.primaryBtn}>
+              <Link href="/auth/login" className={styles.primaryBtn}>
                 Get Started
               </Link>
               <Link href="#features" className={styles.secondaryBtn}>

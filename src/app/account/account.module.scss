@@ -1,3 +1,36 @@
+/* Layout Styles */
+.accountLayout {
+  display: flex;
+  height: 100vh;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+  }
+}
+
+.accountContent {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f9fafb;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+
+    &:hover {
+      background: #9ca3af;
+    }
+  }
+}
+
 /* Breakpoints */
 $mobile: 640px;
 $tablet: 768px;

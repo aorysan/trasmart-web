@@ -1,4 +1,5 @@
 ﻿@use "../../components/theme/tokens" as *;
+@use "sass:color";
 
 /* Layout Styles */
 .accountLayout {
@@ -217,7 +218,7 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: darken($accentColor, 10%);
+    background-color: color.adjust($accentColor, $lightness: -10%);
   }
 }
 
@@ -330,7 +331,7 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: darken($accentColor, 10%);
+    background-color: color.adjust($accentColor, $lightness: -10%);
   }
 
   &:active {
@@ -409,7 +410,7 @@
   color: $white;
 
   &:hover {
-    background-color: darken($successColor, 10%);
+    background-color: color.adjust($successColor, $lightness: -10%);
   }
 
   &:active {

@@ -1,4 +1,5 @@
 ﻿@use "../../components/theme/tokens" as *;
+@use "sass:color";
 
 /* Layout Styles */
 .rewardLayout {
@@ -408,7 +409,7 @@
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
-    background-color: darken($accentColor, 10%);
+    background-color: color.adjust($accentColor, $lightness: -10%);
     transform: scale(1.02);
   }
 

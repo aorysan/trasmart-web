@@ -97,8 +97,7 @@ export default function LoginPage() {
                     alt={showPassword ? "invisible" : "visible"}
                   />
                 </button>
-              </div>
-            </div>
+              </div>            </div>
             <div className={styles.loginCard_form_options}>
               <label className={styles.rememberMe}>
                 <input type="checkbox" />

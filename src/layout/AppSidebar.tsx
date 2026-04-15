@@ -1,118 +1,168 @@
 "use client";
-import React, { useCallback } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSidebar } from "@/context/SidebarContext";
-import styles from "./AppSidebar.module.scss";
+
+import React, { useState } from "react";
+import {
+  LayoutDashboard,
+  Coins,
+  UserCircle,
+  Settings,
+  Recycle,
+  LogOut,
+  Menu,
+} from "lucide-react";
 
 type NavItem = {
   name: string;
   path: string;
-  shortLabel: string;
+  icon: React.ReactNode;
 };
 
 const navItems: NavItem[] = [
   {
     name: "Dashboard",
     path: "/dashboard",
-    shortLabel: "DB",
+    icon: <LayoutDashboard size={20} />,
   },
   {
     name: "My Points",
     path: "/my-points",
-    shortLabel: "MP",
+    icon: <Coins size={20} />,
   },
   {
-    name: "User Profile",
+    name: "Account",
     path: "/profile",
-    shortLabel: "UP",
+    icon: <UserCircle size={20} />,
+  },
+  {
+    name: "Settings",
+    path: "/settings",
+    icon: <Settings size={20} />,
   },
 ];
 
 const AppSidebar: React.FC = () => {
-  const {
-    isExpanded,
-    isMobileOpen,
-    isHovered,
-    setIsHovered,
-    toggleSidebar,
-    toggleMobileSidebar,
-  } = useSidebar();
-  const pathname = usePathname();
+  // State pengganti (mock) agar preview berjalan tanpa context/navigation Next.js
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [pathname, setPathname] = useState("/dashboard");
+
   const isOpen = isExpanded || isHovered || isMobileOpen;
 
+  const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
+
   const renderMenuItems = (items: NavItem[]) => (
-    <ul className={styles.menuList}>
-      {items.map((nav) => (
-        <li key={nav.name}>
-          <Link
-            href={nav.path}
-            className={`${styles.menuItem} ${
-              isActive(nav.path) ? styles.menuItemActive : ""
-            }`}
-            onClick={() => {
-              if (isMobileOpen) {
-                toggleMobileSidebar();
-              }
-            }}
-          >
-            <span className={styles.shortLabel}>{nav.shortLabel}</span>
-            {isOpen && <span className={styles.menuText}>{nav.name}</span>}
-          </Link>
-        </li>
-      ))}
+    <ul className="flex flex-col gap-2 p-0 m-0 list-none">
+      {items.map((nav) => {
+        const active = pathname === nav.path;
+        return (
+          <li key={nav.name}>
+            <a
+              href="#"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border border-transparent no-underline ${
+                active
+                  ? "bg-white/10 text-white font-medium"
+                  : "text-gray-300 hover:bg-white/5 hover:text-white"
+              }`}
+              onClick={(e) => {
+                e.preventDefault();
+                setPathname(nav.path);
+                if (isMobileOpen) {
+                  toggleMobileSidebar();
+                }
+              }}
+            >
+              <span className="flex items-center justify-center min-w-[1.5rem]">
+                {nav.icon}
+              </span>
+              {isOpen && <span className="text-[0.95rem]">{nav.name}</span>}
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 
-  const isActive = useCallback((path: string) => path === pathname, [pathname]);
-
   return (
     <>
+      {/* Mobile Toggle Button */}
       <button
-        className={styles.mobileToggle}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-[#134E4A] border border-[#134E4A]/25 text-[#F4FFF8] rounded-xl p-2 text-sm font-semibold cursor-pointer shadow-md"
         type="button"
         onClick={toggleMobileSidebar}
       >
-        Menu
+        <Menu size={24} />
       </button>
 
+      {/* Sidebar Area */}
       <aside
-        className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : styles.sidebarCollapsed} ${
-          isMobileOpen ? styles.sidebarMobileOpen : ""
+        className={`fixed lg:relative top-0 left-0 h-full lg:h-[calc(100vh-2rem)] lg:m-4 z-40 bg-[#134E4A] text-white flex flex-col py-6 transition-all duration-300 shadow-xl overflow-x-hidden whitespace-nowrap lg:rounded-3xl ${
+          isOpen ? "w-65 px-6" : "w-22.5 px-[1.2rem]"
+        } ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         onMouseEnter={() => !isExpanded && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* <div className={styles.topRow}>
-          {isOpen ? <h2>Trasmart</h2> : <h2>TM</h2>}
-          <button
-            className={styles.collapseBtn}
-            type="button"
-            onClick={toggleSidebar}
-          >
-            {isExpanded ? "<" : ">"}
-          </button>
-        </div> */}
-
-        <div className={styles.profileCard}>
-          <div className={styles.avatar}>A</div>
+        {/* Brand Logo */}
+        <div className="flex items-center gap-3 mb-10 overflow-hidden">
+          <div className="bg-[#80ED99] p-2 rounded-xl text-[#134E4A] flex items-center justify-center min-w-10 h-10 w-10">
+            <Recycle size={24} />
+          </div>
           {isOpen && (
-            <div>
-              <p className={styles.profileName}>Aryok</p>
-              <p className={styles.profileEmail}>example@mail.com</p>
+            <h1 className="text-xl font-bold tracking-wide m-0">TrasMart</h1>
+          )}
+        </div>
+
+        {/* User Profile */}
+        <div className="flex items-center gap-3 mb-10 overflow-hidden">
+          <div className="relative min-w-12">
+            <div className="w-12 h-12 rounded-full bg-gray-300 border-2 border-[#80ED99] flex items-center justify-center overflow-hidden">
+              <UserCircle size={40} className="text-gray-500" />
+            </div>
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[#134E4A]">
+              4
+            </span>
+          </div>
+          {isOpen && (
+            <div className="flex flex-col">
+              <p className="m-0 text-[1.125rem] font-semibold leading-tight">
+                example
+              </p>
+              <p className="m-0 text-[0.875rem] text-gray-300">
+                example@gmail.com
+              </p>
             </div>
           )}
         </div>
 
-        <nav className={styles.navSection}>
-          {isOpen && <p className={styles.sectionLabel}>Menu</p>}
+        {/* Navigation */}
+        <nav className="flex-1 overflow-hidden">
           {renderMenuItems(navItems)}
         </nav>
 
-        <div className={styles.footerHint}>
-          {isOpen ? "Sort your waste, save the planet." : "Eco"}
+        {/* Logout & Footer */}
+        <div className="mt-auto pt-6 border-t border-white/20 overflow-hidden">
+          <a
+            href="#"
+            className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white transition-colors no-underline"
+            onClick={(e) => e.preventDefault()}
+          >
+            <span className="flex items-center justify-center min-w-[1.5rem]">
+              <LogOut size={20} />
+            </span>
+            {isOpen && <span>Logout</span>}
+          </a>
         </div>
       </aside>
+
+      {/* Overlay for mobile */}
+      {isMobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={toggleMobileSidebar}
+        />
+      )}
     </>
   );
 };

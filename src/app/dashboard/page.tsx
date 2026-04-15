@@ -6,9 +6,9 @@ import styles from "./page.module.scss";
 export default function DashboardRoute() {
   return (
     <SidebarProvider>
-      <div className={styles.dashboardLayout}>
+      <div className="flex h-screen bg-[#F4FFF8] font-sans overflow-hidden relative">
         <AppSidebar />
-        <main className={styles.dashboardContent}>
+        <main className="flex-1 overflow-y-auto">
           <DashboardPage />
         </main>
       </div>

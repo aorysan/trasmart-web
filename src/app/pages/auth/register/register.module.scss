@@ -1,21 +1,4 @@
-/* Breakpoints */
-$mobile: 640px;
-$tablet: 768px;
-$desktop: 1024px;
-
-/* Colors */
-$light-green: #6fa898;
-$white: #eff7f2;
-$bgPrimary: #e8f2ef;
-$bgGradient1: #edf7f4;
-$bgGradient2: #f5fbf8;
-$textDark: #111;
-$textGray: #9ca3af;
-$textMedium: #374151;
-$textLight: #6b7280;
-$borderColor: #e5e7eb;
-$accentColor: #6fa898;
-$white: #ffffff;
+﻿@use "../../../components/theme/tokens" as *;
 
 /* Main Container */
 .registerContainer {
@@ -150,7 +133,7 @@ $white: #ffffff;
   color: $textDark;
 
   &::placeholder {
-    color: #d1d5db;
+    color: $gray-300;
   }
 
   &:focus {
@@ -170,7 +153,7 @@ $white: #ffffff;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9ca3af;
+  color: $textGray;
   cursor: pointer;
   transition: color 0.2s ease;
   padding: 0.25rem;
@@ -179,7 +162,7 @@ $white: #ffffff;
   justify-content: center;
 
   &:hover {
-    color: #4b5563;
+    color: $gray-600;
   }
 }
 
@@ -231,7 +214,7 @@ $white: #ffffff;
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #f9fafb;
+    background-color: $gray-50;
   }
 
   svg {
@@ -320,3 +303,4 @@ $white: #ffffff;
     gap: 0.75rem;
   }
 }
+

@@ -2,9 +2,15 @@
 "use client";
 
 import { createContext, useState, useEffect, ReactNode } from "react";
+import {
+  getInitialTheme,
+  getNextTheme,
+  THEME_STORAGE_KEY,
+  ThemeMode,
+} from "@/app/components/theme";
 
 interface ThemeContextType {
-  theme: string;
+  theme: ThemeMode;
   toggleTheme: () => void;
 }
 
@@ -13,10 +19,7 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(
 );
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") return "light";
-    return localStorage.getItem("theme") || "light";
-  });
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,9 +28,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
+    const newTheme = getNextTheme(theme);
     setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
   };
 
   if (!mounted) return <>{children}</>;

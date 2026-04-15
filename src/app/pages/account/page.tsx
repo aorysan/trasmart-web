@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { SidebarProvider } from "@/context/SidebarContext";
-import AppSidebar from "@/layout/AppSidebar";
+import AppSidebar from "@/app/components/layout/AppSidebar";
 import {
   User,
   Mail,

@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/utils/supabase/middleware";
 
-//Protected routes yang require authentication
 const protectedRoutes = [
   "/dashboard",
   "/account",
@@ -11,44 +10,30 @@ const protectedRoutes = [
   "/pages/reward",
 ];
 
-//Public routes (bisa diakses tanpa login)
-const publicRoutes = ["/", "/auth/login", "/auth/register"];
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  //Check apakah route ini protected
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const { supabase, supabaseResponse } = createClient(request);
 
-  //Ambil session dari serverside Supabase client
-  const supabase = createClient(request);
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log(`[Middleware] Path: ${pathname}, Has Session: ${!!user}`);
+  console.log(`[Middleware] Path: ${pathname}, Has User: ${!!user}`);
 
-  //CASE 1: User mencoba akses protected route tapi belum login
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
+
   if (isProtectedRoute && !user) {
-    console.log(
-      `[Middleware] Redirecting unauthenticated user from ${pathname} to /auth/login`,
-    );
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  //CASE 2: User sudah login tapi coba akses login/register page
   if ((pathname === "/auth/login" || pathname === "/auth/register") && user) {
-    console.log(
-      `[Middleware] Redirecting authenticated user from ${pathname} to /dashboard`,
-    );
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  //CASE 3: Request OK, lanjutkan
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {

@@ -3,7 +3,7 @@
 
 import styles from "./login.module.scss";
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // ✅ DIPERBAIKI
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/client";
 import Link from "next/link";
 
@@ -38,7 +38,6 @@ export default function LoginPage() {
       if (signInError) {
         setError(signInError.message);
       } else {
-        //Redirect ke dashboard
         router.push("/dashboard");
       }
     } catch (err) {
@@ -56,7 +55,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
       if (error) setError(error.message);
@@ -74,7 +73,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
       if (error) setError(error.message);

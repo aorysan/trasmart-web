@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { SidebarProvider } from "@/contexts/SidebarContext";
-import AppSidebar from "@/app/components/layout/AppSidebar";
 import {
   User,
   Mail,
@@ -66,7 +64,7 @@ export default function AccountRoute() {
     try {
       await updateUser(formData);
       setIsEditing(false);
-      alert("✅ Profile updated successfully!");
+      alert("Profile updated successfully!");
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to update profile";
@@ -89,336 +87,311 @@ export default function AccountRoute() {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <div className={styles.accountLayout}>
-          <AppSidebar />
-          <main className={styles.accountContent}>
-            <div className={styles.mainContainer}>
-              <div style={{ padding: "40px", textAlign: "center" }}>
-                <p>Loading profile...</p>
-              </div>
-            </div>
-          </main>
+      <div className={styles.mainContainer}>
+        <div style={{ padding: "40px", textAlign: "center" }}>
+          <p>Loading profile...</p>
         </div>
-      </SidebarProvider>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <SidebarProvider>
-        <div className={styles.accountLayout}>
-          <AppSidebar />
-          <main className={styles.accountContent}>
-            <div className={styles.mainContainer}>
-              <div
-                style={{
-                  padding: "40px",
-                  textAlign: "center",
-                  color: "#c33",
-                  background: "#fee",
-                  borderRadius: "8px",
-                }}
-              >
-                <p>Error loading profile: {error}</p>
-              </div>
-            </div>
-          </main>
+      <div className={styles.mainContainer}>
+        <div
+          style={{
+            padding: "40px",
+            textAlign: "center",
+            color: "#c33",
+            background: "#fee",
+            borderRadius: "8px",
+          }}
+        >
+          <p>Error loading profile: {error}</p>
         </div>
-      </SidebarProvider>
+      </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <div className={styles.accountLayout}>
-        <AppSidebar />
-        <main className={styles.accountContent}>
-          <div className={styles.mainContainer}>
-            <div className={styles.topbar}>
-              <div className={styles.topbarContent}>
-                <h2>My Account</h2>
-                <p>Kelola informasi profil akun kamu</p>
-              </div>
-              <button className={styles.notificationBtn}>
-                <Bell size={24} />
-                <span className={styles.notificationBadge}></span>
-              </button>
+    <div className={styles.mainContainer}>
+      <div className={styles.topbar}>
+        <div className={styles.topbarContent}>
+          <h2>My Account</h2>
+          <p>Kelola informasi profil akun kamu</p>
+        </div>
+        <button className={styles.notificationBtn}>
+          <Bell size={24} />
+          <span className={styles.notificationBadge}></span>
+        </button>
+      </div>
+
+      <div className={styles.contentWrapper}>
+        <div className={styles.profileCard}>
+          <div className={styles.profileHeader}>
+            <div className={styles.avatarContainer}>
+              <div className={styles.avatarLarge}>{user?.avatar || "👤"}</div>
+              {isEditing && (
+                <button className={styles.avatarEditBtn}>
+                  <Camera size={16} />
+                </button>
+              )}
             </div>
-
-            <div className={styles.contentWrapper}>
-              <div className={styles.profileCard}>
-                <div className={styles.profileHeader}>
-                  <div className={styles.avatarContainer}>
-                    <div className={styles.avatarLarge}>{user?.avatar || "👤" }</div>
-                    {isEditing && (
-                      <button className={styles.avatarEditBtn}>
-                        <Camera size={16} />
-                      </button>
-                    )}
-                  </div>
-                  <div className={styles.profileBasic}>
-                    <h1 className={styles.profileName}>
-                      {user?.fullName || "Guest"}
-                    </h1>
-                    {user?.username && (
-                      <p className={styles.profileUsername}>
-                        @{user.username || "Guest"}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className={styles.profileDetails}>
-                  {!isEditing ? (
-                    <>
-                      <div className={styles.detailItem}>
-                        <div className={styles.detailIcon}>
-                          <User size={20} />
-                        </div>
-                        <div className={styles.detailContent}>
-                          <p className={styles.detailLabel}>User Name</p>
-                          <p className={styles.detailValue}>{user?.username}</p>
-                        </div>
-                      </div>
-
-                      <div className={styles.detailItem}>
-                        <div className={styles.detailIcon}>
-                          <User size={20} />
-                        </div>
-                        <div className={styles.detailContent}>
-                          <p className={styles.detailLabel}>Nama Lengkap</p>
-                          <p className={styles.detailValue}>{user?.fullName}</p>
-                        </div>
-                      </div>
-
-                      <div className={styles.detailItem}>
-                        <div className={styles.detailIcon}>
-                          <Mail size={20} />
-                        </div>
-                        <div className={styles.detailContent}>
-                          <p className={styles.detailLabel}>Email</p>
-                          <p className={styles.detailValue}>{user?.email}</p>
-                          <small style={{ color: "#999" }}>
-                            Email cannot be changed here
-                          </small>
-                        </div>
-                      </div>
-
-                      <div className={styles.detailItem}>
-                        <div className={styles.detailIcon}>
-                          <Phone size={20} />
-                        </div>
-                        <div className={styles.detailContent}>
-                          <p className={styles.detailLabel}>Nomor Telepon</p>
-                          <p className={styles.detailValue}>{user?.phone}</p>
-                        </div>
-                      </div>
-
-                      <div className={styles.detailItem}>
-                        <div className={styles.detailIcon}>
-                          <MapPin size={20} />
-                        </div>
-                        <div className={styles.detailContent}>
-                          <p className={styles.detailLabel}>Alamat</p>
-                          <p className={styles.detailValue}>{user?.address}</p>
-                        </div>
-                      </div>
-
-                      {user?.city && (
-                        <div className={styles.detailItem}>
-                          <div className={styles.detailIcon}>
-                            <MapPin size={20} />
-                          </div>
-                          <div className={styles.detailContent}>
-                            <p className={styles.detailLabel}>Kota</p>
-                            <p className={styles.detailValue}>{user.city}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {user?.postal_code && (
-                        <div className={styles.detailItem}>
-                          <div className={styles.detailIcon}>
-                            <MapPin size={20} />
-                          </div>
-                          <div className={styles.detailContent}>
-                            <p className={styles.detailLabel}>Kode Pos</p>
-                            <p className={styles.detailValue}>
-                              {user.postal_code}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      <button className={styles.editBtn} onClick={handleEdit}>
-                        <Edit size={18} />
-                        Edit Profile
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className={styles.formGroup}>
-                        <label htmlFor="username" className={styles.label}>
-                          User Name
-                        </label>
-                        <input
-                          id="username"
-                          name="username"
-                          type="text"
-                          className={styles.input}
-                          value={formData.username || ""}
-                          onChange={handleInputChange}
-                          disabled={isSaving}
-                        />
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="fullName" className={styles.label}>
-                          Nama Lengkap
-                        </label>
-                        <input
-                          id="fullName"
-                          name="fullName"
-                          type="text"
-                          className={styles.input}
-                          value={formData.fullName || ""}
-                          onChange={handleInputChange}
-                          disabled={isSaving}
-                        />
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="email" className={styles.label}>
-                          Email
-                        </label>
-                        <input
-                          id="email"
-                          type="email"
-                          className={styles.input}
-                          value={user?.email}
-                          disabled
-                          style={{ opacity: 0.6 }}
-                        />
-                        <small style={{ color: "#999" }}>
-                          Email cannot be changed
-                        </small>
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="phone" className={styles.label}>
-                          Nomor Telepon
-                        </label>
-                        <input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          className={styles.input}
-                          value={formData.phone || ""}
-                          onChange={handleInputChange}
-                          disabled={isSaving}
-                        />
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="address" className={styles.label}>
-                          Alamat
-                        </label>
-                        <input
-                          id="address"
-                          name="address"
-                          type="text"
-                          className={styles.input}
-                          value={formData.address || ""}
-                          onChange={handleInputChange}
-                          disabled={isSaving}
-                        />
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="city" className={styles.label}>
-                          Kota
-                        </label>
-                        <input
-                          id="city"
-                          name="city"
-                          type="text"
-                          className={styles.input}
-                          value={formData.city || ""}
-                          onChange={handleInputChange}
-                          disabled={isSaving}
-                        />
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label htmlFor="postal_code" className={styles.label}>
-                          Kode Pos
-                        </label>
-                        <input
-                          id="postal_code"
-                          name="postal_code"
-                          type="text"
-                          className={styles.input}
-                          value={formData.postal_code || ""}
-                          onChange={handleInputChange}
-                          disabled={isSaving}
-                        />
-                      </div>
-
-                      <div className={styles.formActions}>
-                        <button
-                          className={styles.saveBtn}
-                          onClick={handleSave}
-                          disabled={isSaving}
-                        >
-                          <Check size={18} />
-                          {isSaving ? "Saving..." : "Simpan Perubahan"}
-                        </button>
-                        <button
-                          className={styles.cancelBtn}
-                          onClick={handleCancel}
-                          disabled={isSaving}
-                        >
-                          <X size={18} />
-                          Batal
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className={styles.sidebar}>
-                <div className={styles.statsCard}>
-                  <h3 className={styles.statsTitle}>Account Stats</h3>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Total Poin</span>
-                    <span className={styles.statValue}>350 Pts</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Total Setor</span>
-                    <span className={styles.statValue}>12.5 kg</span>
-                  </div>
-                </div>
-
-                <div className={styles.actionsCard}>
-                  <h3 className={styles.actionsTitle}>Aksi Cepat</h3>
-                  <button className={styles.actionBtn}>Ubah Password</button>
-                  <button className={styles.actionBtn}>
-                    Preferensi Notifikasi
-                  </button>
-                  <button
-                    className={styles.actionBtn + " " + styles.dangerBtn}
-                    onClick={signOut}
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
+            <div className={styles.profileBasic}>
+              <h1 className={styles.profileName}>
+                {user?.fullName || "Guest"}
+              </h1>
+              {user?.username && (
+                <p className={styles.profileUsername}>
+                  @{user.username || "Guest"}
+                </p>
+              )}
             </div>
           </div>
-        </main>
+
+          <div className={styles.profileDetails}>
+            {!isEditing ? (
+              <>
+                <div className={styles.detailItem}>
+                  <div className={styles.detailIcon}>
+                    <User size={20} />
+                  </div>
+                  <div className={styles.detailContent}>
+                    <p className={styles.detailLabel}>User Name</p>
+                    <p className={styles.detailValue}>{user?.username}</p>
+                  </div>
+                </div>
+
+                <div className={styles.detailItem}>
+                  <div className={styles.detailIcon}>
+                    <User size={20} />
+                  </div>
+                  <div className={styles.detailContent}>
+                    <p className={styles.detailLabel}>Nama Lengkap</p>
+                    <p className={styles.detailValue}>{user?.fullName}</p>
+                  </div>
+                </div>
+
+                <div className={styles.detailItem}>
+                  <div className={styles.detailIcon}>
+                    <Mail size={20} />
+                  </div>
+                  <div className={styles.detailContent}>
+                    <p className={styles.detailLabel}>Email</p>
+                    <p className={styles.detailValue}>{user?.email}</p>
+                    <small style={{ color: "#999" }}>
+                      Email cannot be changed here
+                    </small>
+                  </div>
+                </div>
+
+                <div className={styles.detailItem}>
+                  <div className={styles.detailIcon}>
+                    <Phone size={20} />
+                  </div>
+                  <div className={styles.detailContent}>
+                    <p className={styles.detailLabel}>Nomor Telepon</p>
+                    <p className={styles.detailValue}>{user?.phone}</p>
+                  </div>
+                </div>
+
+                <div className={styles.detailItem}>
+                  <div className={styles.detailIcon}>
+                    <MapPin size={20} />
+                  </div>
+                  <div className={styles.detailContent}>
+                    <p className={styles.detailLabel}>Alamat</p>
+                    <p className={styles.detailValue}>{user?.address}</p>
+                  </div>
+                </div>
+
+                {user?.city && (
+                  <div className={styles.detailItem}>
+                    <div className={styles.detailIcon}>
+                      <MapPin size={20} />
+                    </div>
+                    <div className={styles.detailContent}>
+                      <p className={styles.detailLabel}>Kota</p>
+                      <p className={styles.detailValue}>{user.city}</p>
+                    </div>
+                  </div>
+                )}
+
+                {user?.postal_code && (
+                  <div className={styles.detailItem}>
+                    <div className={styles.detailIcon}>
+                      <MapPin size={20} />
+                    </div>
+                    <div className={styles.detailContent}>
+                      <p className={styles.detailLabel}>Kode Pos</p>
+                      <p className={styles.detailValue}>{user.postal_code}</p>
+                    </div>
+                  </div>
+                )}
+
+                <button className={styles.editBtn} onClick={handleEdit}>
+                  <Edit size={18} />
+                  Edit Profile
+                </button>
+              </>
+            ) : (
+              <>
+                <div className={styles.formGroup}>
+                  <label htmlFor="username" className={styles.label}>
+                    User Name
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    className={styles.input}
+                    value={formData.username || ""}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="fullName" className={styles.label}>
+                    Nama Lengkap
+                  </label>
+                  <input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    className={styles.input}
+                    value={formData.fullName || ""}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="email" className={styles.label}>
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    className={styles.input}
+                    value={user?.email}
+                    disabled
+                    style={{ opacity: 0.6 }}
+                  />
+                  <small style={{ color: "#999" }}>
+                    Email cannot be changed
+                  </small>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="phone" className={styles.label}>
+                    Nomor Telepon
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    className={styles.input}
+                    value={formData.phone || ""}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="address" className={styles.label}>
+                    Alamat
+                  </label>
+                  <input
+                    id="address"
+                    name="address"
+                    type="text"
+                    className={styles.input}
+                    value={formData.address || ""}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="city" className={styles.label}>
+                    Kota
+                  </label>
+                  <input
+                    id="city"
+                    name="city"
+                    type="text"
+                    className={styles.input}
+                    value={formData.city || ""}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="postal_code" className={styles.label}>
+                    Kode Pos
+                  </label>
+                  <input
+                    id="postal_code"
+                    name="postal_code"
+                    type="text"
+                    className={styles.input}
+                    value={formData.postal_code || ""}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <div className={styles.formActions}>
+                  <button
+                    className={styles.saveBtn}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <Check size={18} />
+                    {isSaving ? "Saving..." : "Simpan Perubahan"}
+                  </button>
+                  <button
+                    className={styles.cancelBtn}
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                  >
+                    <X size={18} />
+                    Batal
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.sidebar}>
+          <div className={styles.statsCard}>
+            <h3 className={styles.statsTitle}>Account Stats</h3>
+            <div className={styles.statItem}>
+              <span className={styles.statLabel}>Total Poin</span>
+              <span className={styles.statValue}>350 Pts</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statLabel}>Total Setor</span>
+              <span className={styles.statValue}>12.5 kg</span>
+            </div>
+          </div>
+
+          <div className={styles.actionsCard}>
+            <h3 className={styles.actionsTitle}>Aksi Cepat</h3>
+            <button className={styles.actionBtn}>Ubah Password</button>
+            <button className={styles.actionBtn}>Preferensi Notifikasi</button>
+            <button
+              className={styles.actionBtn + " " + styles.dangerBtn}
+              onClick={signOut}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

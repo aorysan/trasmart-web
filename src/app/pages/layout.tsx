@@ -2,7 +2,7 @@
 
 import React from "react";
 import { SidebarProvider } from "@/contexts/SidebarContext";
-import AppSidebar from "@/app/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
 import styles from "./pages.module.scss"; // ← Kita buat file ini
 
 interface PagesLayoutProps {

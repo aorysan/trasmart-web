@@ -1,6 +1,5 @@
 import "./globals.css";
 import type { Metadata } from "next";
-// import { ThemeProvider } from "./context/themeContext";
 import { Inter, Poppins } from "next/font/google";
 import { Providers } from "./providers";
 

@@ -29,7 +29,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  if ((pathname === "/auth/login" || pathname === "/auth/register") && user) {
+  if (
+    (pathname === "/auth/login" ||
+      pathname === "/auth/register" ||
+      pathname === "/") &&
+    user
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

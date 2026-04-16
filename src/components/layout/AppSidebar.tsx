@@ -106,7 +106,6 @@ const AppSidebar: React.FC = () => {
           {isOpen && (
             <div className={styles.profileInfo}>
               <p className={styles.profileName}>{userProfile?.fullName}</p>
-              {/* <p className={styles.profileEmail}>{userProfile?.email}</p> */}
             </div>
           )}
         </div>
@@ -122,20 +121,12 @@ const AppSidebar: React.FC = () => {
 
         {/* Logout & Footer */}
         <div className={styles.logoutSection}>
-          <a
-            href="#"
-            className={styles.logoutLink}
-            onClick={(e) => {
-              e.preventDefault();
-              signOut();
-              router.push("/auth/login");
-            }}
-          >
+          <button className={styles.logoutLink} onClick={signOut}>
             <span className={styles.logoutIcon}>
               <LogOut size={20} />
             </span>
             {isOpen && <span>Logout</span>}
-          </a>
+          </button>
         </div>
       </aside>
 

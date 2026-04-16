@@ -19,13 +19,12 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // ✅ Email/Password signup
+  //Email/Password signup
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // ✅ VALIDASI
     if (!fullName || !email || !password || !confirmPassword) {
       setError("All fields are required");
       setLoading(false);
@@ -45,7 +44,7 @@ export default function RegisterPage() {
     }
 
     try {
-      // ✅ Sign up di Supabase
+      //Sign up di Supabase
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -53,7 +52,7 @@ export default function RegisterPage() {
           data: {
             full_name: fullName,
           },
-          // ✅ Redirect setelah email confirmation
+          //Redirect
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
@@ -62,7 +61,7 @@ export default function RegisterPage() {
         setError(signUpError.message);
       } else if (data.user) {
         setSuccess(true);
-        // ✅ Redirect ke login setelah 2 detik
+        // Redirect ke login setelah 2 detik
         setTimeout(() => {
           router.push("/auth/login?message=Check your email to confirm signup");
         }, 2000);
@@ -74,7 +73,7 @@ export default function RegisterPage() {
     }
   };
 
-  // ✅ GitHub OAuth signup
+  // GitHub OAuth signup
   const handleGitHubSignUp = async () => {
     setLoading(true);
     setError(null);
@@ -93,7 +92,7 @@ export default function RegisterPage() {
     }
   };
 
-  // ✅ Google OAuth signup
+  // Google OAuth signup
   const handleGoogleSignUp = async () => {
     setLoading(true);
     setError(null);
@@ -162,7 +161,6 @@ export default function RegisterPage() {
             <p className={styles.subheading}>Sign up and get the rewards</p>
           </div>
 
-          {/* ✅ ERROR MESSAGE */}
           {error && (
             <div
               style={{
@@ -198,7 +196,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Email */}
             <div className={styles.formGroup}>
               <label htmlFor="email" className={styles.label}>
                 Email
@@ -215,7 +212,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Password */}
             <div className={styles.formGroup}>
               <label htmlFor="password" className={styles.label}>
                 Password
@@ -244,7 +240,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* ✅ CONFIRM PASSWORD */}
             <div className={styles.formGroup}>
               <label htmlFor="confirmPassword" className={styles.label}>
                 Confirm Password
@@ -261,14 +256,16 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* ✅ SUBMIT BUTTON */}
-            <button type="submit" className={styles.submitBtn} disabled={loading}>
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              disabled={loading}
+            >
               {loading ? "Creating Account..." : "Sign Up"}
             </button>
 
             {/* Social Buttons */}
             <div className={styles.socialContainer}>
-              {/* Google */}
               <button
                 type="button"
                 className={styles.socialBtn}

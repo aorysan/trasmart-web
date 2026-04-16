@@ -1,79 +1,54 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/utils/supabase/middleware';
+
+// ✅ Protected routes yang require authentication
+const protectedRoutes = [
+  '/dashboard',
+  '/account',
+  '/reward',
+  '/pages/dashboard',
+  '/pages/account',
+  '/pages/reward',
+];
+
+// ✅ Public routes (bisa diakses tanpa login)
+const publicRoutes = [
+  '/',
+  '/auth/login',
+  '/auth/register',
+];
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  const { pathname } = request.nextUrl;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  // ✅ Check apakah route ini protected
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Allow local development to run even when Supabase env vars are not configured yet.
-  if (!supabaseUrl || !supabasePublishableKey) {
-    return supabaseResponse;
+  // ✅ Ambil session dari cookie
+  const supabase = createClient(request);
+  const { data: { session } } = await supabase.auth.getSession();
+
+  console.log(`[Middleware] Path: ${pathname}, Has Session: ${!!session}`);
+
+  // ✅ CASE 1: User mencoba akses protected route tapi belum login
+  if (isProtectedRoute && !session) {
+    console.log(`[Middleware] Redirecting unauthenticated user from ${pathname} to /auth/login`);
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabasePublishableKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-          });
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options);
-          });
-        },
-      },
-    },
-  );
-
-  // Refresh session if needed
-  await supabase.auth.getSession();
-
-  // Public routes that don't require authentication
-  const publicRoutes = ["/", "/auth/login", "/auth/register"];
-  const pathname = request.nextUrl.pathname;
-
-  // Check if route is public
-  if (publicRoutes.includes(pathname)) {
-    return supabaseResponse;
+  // ✅ CASE 2: User sudah login tapi coba akses login/register page
+  if ((pathname === '/auth/login' || pathname === '/auth/register') && session) {
+    console.log(`[Middleware] Redirecting authenticated user from ${pathname} to /dashboard`);
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Protected routes - check authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // If trying to access protected route without being logged in, redirect to login
-  if (!user && pathname.startsWith("/(main)")) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/auth/login";
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return supabaseResponse;
+  // ✅ CASE 3: Request OK, lanjutkan
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    '/((?!_next/static|_next/image|favicon.ico|icon.png).*)',
   ],
 };

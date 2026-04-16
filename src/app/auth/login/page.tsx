@@ -16,7 +16,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // ✅ Email/Password login
+  // email/Password login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,7 +38,7 @@ export default function LoginPage() {
       if (signInError) {
         setError(signInError.message);
       } else {
-        // ✅ Redirect ke dashboard
+        //Redirect ke dashboard
         router.push("/dashboard");
       }
     } catch (err) {
@@ -48,7 +48,7 @@ export default function LoginPage() {
     }
   };
 
-  // ✅ GitHub OAuth login
+  //GitHub OAuth login
   const handleGitHubLogin = async () => {
     setLoading(true);
     setError(null);
@@ -67,6 +67,24 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) setError(error.message);
+    } catch (err) {
+      setError("Failed to login with Google");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.main}>
       <div className={styles.loginCard}>
@@ -79,7 +97,7 @@ export default function LoginPage() {
           <h1>Welcome Back</h1>
           <p>please enter your credentials to sign in.</p>
 
-          {/* ✅ ERROR MESSAGE */}
+          {/*ERROR MESSAGE */}
           {error && (
             <div
               style={{
@@ -98,6 +116,22 @@ export default function LoginPage() {
 
           <div className={styles.loginCard_socials}>
             <ul>
+              <li>
+                <button
+                  type="button"
+                  className={styles.loginCard_socials_button}
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  title="Sign in with Google"
+                >
+                  <img
+                    width="30"
+                    height="30"
+                    src="https://img.icons8.com/color/48/google-logo.png"
+                    alt="google-logo"
+                  />
+                </button>
+              </li>
               <li>
                 <button
                   type="button"
@@ -167,7 +201,6 @@ export default function LoginPage() {
               </label>
               <a href="">Forgot password?</a>
             </div>
-            {/* ✅ BUTTON WITH LOADING STATE */}
             <button
               type="submit"
               className={styles.loginCard_form_submitBtn}

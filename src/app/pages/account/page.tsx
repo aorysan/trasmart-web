@@ -21,8 +21,7 @@ import type { UserProfile } from "@/hooks/useAuth";
 export default function AccountRoute() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { user, loading, error, isAuthenticated, updateUser, signOut } =
-    useUser();
+  const { user, loading, error, updateUser, signOut } = useUser();
 
   // ✅ Proper type dengan nullable
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
@@ -51,13 +50,13 @@ export default function AccountRoute() {
     // Reset form ke original data
     if (user) {
       setFormData({
-        username: user.username,
-        fullName: user.fullName,
-        phone: user.phone,
-        address: user.address,
-        avatar: user.avatar,
-        city: user.city,
-        postal_code: user.postal_code,
+        username: user.username || "",
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        avatar: user.avatar || "",
+        city: user.city || "",
+        postal_code: user.postal_code || "",
       });
     }
   };
@@ -99,24 +98,6 @@ export default function AccountRoute() {
             <div className={styles.mainContainer}>
               <div style={{ padding: "40px", textAlign: "center" }}>
                 <p>Loading profile...</p>
-              </div>
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
-  // ✅ Handle not authenticated
-  if (!isAuthenticated || !user) {
-    return (
-      <SidebarProvider>
-        <div className={styles.accountLayout}>
-          <AppSidebar />
-          <main className={styles.accountContent}>
-            <div className={styles.mainContainer}>
-              <div style={{ padding: "40px", textAlign: "center" }}>
-                <p>Please login to view your profile</p>
               </div>
             </div>
           </main>
@@ -172,7 +153,9 @@ export default function AccountRoute() {
               <div className={styles.profileCard}>
                 <div className={styles.profileHeader}>
                   <div className={styles.avatarContainer}>
-                    <div className={styles.avatarLarge}>{user.avatar}</div>
+                    <div className={styles.avatarLarge}>
+                      {user.avatar}
+                    </div>
                     {isEditing && (
                       <button className={styles.avatarEditBtn}>
                         <Camera size={16} />
@@ -180,9 +163,13 @@ export default function AccountRoute() {
                     )}
                   </div>
                   <div className={styles.profileBasic}>
-                    <h1 className={styles.profileName}>{user.fullName}</h1>
+                    <h1 className={styles.profileName}>
+                      {user.fullName || "Guest"}
+                    </h1>
                     {user.username && (
-                      <p className={styles.profileUsername}>@{user.username}</p>
+                      <p className={styles.profileUsername}>
+                        @{user.username || "Guest"}
+                      </p>
                     )}
                   </div>
                 </div>

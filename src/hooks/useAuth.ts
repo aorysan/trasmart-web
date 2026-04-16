@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js";
 
 export interface UserProfile {
   id: string;
-  username?: string;
+  username: string;
   fullName: string;
   email: string;
   phone: string;
@@ -25,7 +25,6 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // ✅ Buat Supabase client sekali saja
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export function useAuth() {
 
     const initAuth = async () => {
       try {
-        // ✅ Get current user dari Supabase Auth
+        //Get current user
         const {
           data: { user },
           error: err,
@@ -52,7 +51,7 @@ export function useAuth() {
 
             if (profileError) {
               console.warn("Profile not found:", profileError);
-              // Create default profile jika belum ada
+              // Create default
               setUserProfile({
                 id: user.id,
                 username: "",
@@ -96,14 +95,14 @@ export function useAuth() {
 
     initAuth();
 
-    // ✅ Setup auth listener untuk real-time updates
+    //setup AuthListener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (isMounted) {
         setUser(session?.user ?? null);
 
-        // ✅ Fetch profile when session changes
+        // Fetch profile on session changes
         if (session?.user?.id) {
           const { data } = await supabase
             .from("profiles")
@@ -157,8 +156,10 @@ export function useAuth() {
       try {
         setError(null);
 
-        // ✅ Prepare update data - hanya yang diizinkan
+        //update data
         const updateData: any = {};
+        if (updates.username !== undefined)
+          updateData.username = updates.username;
         if (updates.fullName !== undefined)
           updateData.full_name = updates.fullName;
         if (updates.phone !== undefined) updateData.phone = updates.phone;
@@ -184,14 +185,14 @@ export function useAuth() {
 
         console.log("Update response:", data);
 
-        // ✅ Update local state
+        //Update local state
         setUserProfile((prev) => (prev ? { ...prev, ...updates } : null));
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Update profile error";
         console.error("updateProfile error:", errorMessage);
         setError(errorMessage);
-        throw err; // ✅ Re-throw untuk component bisa handle
+        throw err;
       }
     },
     [user?.id, supabase],
@@ -202,7 +203,6 @@ export function useAuth() {
     userProfile,
     loading,
     error,
-    isAuthenticated: !!user,
     signOut,
     updateProfile,
   };

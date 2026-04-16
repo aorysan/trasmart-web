@@ -101,7 +101,6 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (isMounted) {
         setUser(session?.user ?? null);
-
         // Fetch profile on session changes
         if (session?.user?.id) {
           const { data } = await supabase

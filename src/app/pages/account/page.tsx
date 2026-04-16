@@ -23,10 +23,10 @@ export default function AccountRoute() {
   const [isSaving, setIsSaving] = useState(false);
   const { user, loading, error, updateUser, signOut } = useUser();
 
-  // ✅ Proper type dengan nullable
+  //Proper type dengan nullable
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
 
-  // ✅ Update formData ketika user data loaded
+  //Update formData ketika user data loaded
   useEffect(() => {
     if (user) {
       setFormData({
@@ -61,7 +61,6 @@ export default function AccountRoute() {
     }
   };
 
-  // ✅ Make async properly with better error handling
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -88,7 +87,6 @@ export default function AccountRoute() {
     }));
   };
 
-  // ✅ Handle loading state
   if (loading) {
     return (
       <SidebarProvider>
@@ -106,7 +104,6 @@ export default function AccountRoute() {
     );
   }
 
-  // ✅ Handle error
   if (error) {
     return (
       <SidebarProvider>
@@ -153,9 +150,7 @@ export default function AccountRoute() {
               <div className={styles.profileCard}>
                 <div className={styles.profileHeader}>
                   <div className={styles.avatarContainer}>
-                    <div className={styles.avatarLarge}>
-                      {user.avatar}
-                    </div>
+                    <div className={styles.avatarLarge}>{user?.avatar || "👤" }</div>
                     {isEditing && (
                       <button className={styles.avatarEditBtn}>
                         <Camera size={16} />
@@ -164,9 +159,9 @@ export default function AccountRoute() {
                   </div>
                   <div className={styles.profileBasic}>
                     <h1 className={styles.profileName}>
-                      {user.fullName || "Guest"}
+                      {user?.fullName || "Guest"}
                     </h1>
-                    {user.username && (
+                    {user?.username && (
                       <p className={styles.profileUsername}>
                         @{user.username || "Guest"}
                       </p>
@@ -183,7 +178,7 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>User Name</p>
-                          <p className={styles.detailValue}>{user.username}</p>
+                          <p className={styles.detailValue}>{user?.username}</p>
                         </div>
                       </div>
 
@@ -193,7 +188,7 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>Nama Lengkap</p>
-                          <p className={styles.detailValue}>{user.fullName}</p>
+                          <p className={styles.detailValue}>{user?.fullName}</p>
                         </div>
                       </div>
 
@@ -203,8 +198,7 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>Email</p>
-                          {/* ✅ Email read-only */}
-                          <p className={styles.detailValue}>{user.email}</p>
+                          <p className={styles.detailValue}>{user?.email}</p>
                           <small style={{ color: "#999" }}>
                             Email cannot be changed here
                           </small>
@@ -217,7 +211,7 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>Nomor Telepon</p>
-                          <p className={styles.detailValue}>{user.phone}</p>
+                          <p className={styles.detailValue}>{user?.phone}</p>
                         </div>
                       </div>
 
@@ -227,11 +221,11 @@ export default function AccountRoute() {
                         </div>
                         <div className={styles.detailContent}>
                           <p className={styles.detailLabel}>Alamat</p>
-                          <p className={styles.detailValue}>{user.address}</p>
+                          <p className={styles.detailValue}>{user?.address}</p>
                         </div>
                       </div>
 
-                      {user.city && (
+                      {user?.city && (
                         <div className={styles.detailItem}>
                           <div className={styles.detailIcon}>
                             <MapPin size={20} />
@@ -243,7 +237,7 @@ export default function AccountRoute() {
                         </div>
                       )}
 
-                      {user.postal_code && (
+                      {user?.postal_code && (
                         <div className={styles.detailItem}>
                           <div className={styles.detailIcon}>
                             <MapPin size={20} />
@@ -302,7 +296,7 @@ export default function AccountRoute() {
                           id="email"
                           type="email"
                           className={styles.input}
-                          value={user.email}
+                          value={user?.email}
                           disabled
                           style={{ opacity: 0.6 }}
                         />
@@ -404,10 +398,6 @@ export default function AccountRoute() {
                   <div className={styles.statItem}>
                     <span className={styles.statLabel}>Total Setor</span>
                     <span className={styles.statValue}>12.5 kg</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Member Sejak</span>
-                    <span className={styles.statValue}>Jan 2026</span>
                   </div>
                 </div>
 

@@ -8,7 +8,6 @@ interface UserContextType {
   user: UserProfile | null;
   loading: boolean;
   error: string | null;
-  isAuthenticated: boolean;
   updateUser: (updatedUser: Partial<UserProfile>) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -17,14 +16,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   //Gunakan useAuth hook untuk dapat data real dari Supabase
-  const {
-    userProfile,
-    loading,
-    error,
-    isAuthenticated,
-    updateProfile,
-    signOut,
-  } = useAuth();
+  const { userProfile, loading, error, updateProfile, signOut } = useAuth();
 
   return (
     <UserContext.Provider
@@ -32,8 +24,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         user: userProfile,
         loading,
         error,
-        isAuthenticated,
-        updateUser: updateProfile, // ✅ Wrapper untuk consistency
+        updateUser: updateProfile, //
         signOut,
       }}
     >

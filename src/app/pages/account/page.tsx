@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   User,
   Mail,
@@ -9,17 +9,20 @@ import {
   Edit,
   Check,
   X,
-  Bell,
   Camera,
 } from "lucide-react";
 import styles from "./account.module.scss";
 import { useUser } from "@/contexts/UserContext";
 import type { UserProfile } from "@/hooks/useAuth";
+import NotificationBell from "@/components/layout/NotificationBell";
+import { getUserPointSummary } from "@/lib/mock/points";
 
 export default function AccountRoute() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user, loading, error, updateUser, signOut } = useUser();
+  const [pointBalance, setPointBalance] = useState(0);
+  const [pointError, setPointError] = useState<string | null>(null);
 
   //Proper type dengan nullable
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
@@ -38,6 +41,48 @@ export default function AccountRoute() {
       });
     }
   }, [user]);
+
+  const loadPoints = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      setPointError(null);
+      const summary = await getUserPointSummary(user.id);
+      setPointBalance(summary.netPoints);
+    } catch (err) {
+      setPointError(err instanceof Error ? err.message : "Gagal memuat poin");
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    void loadPoints();
+
+    const intervalId = window.setInterval(() => {
+      void loadPoints();
+    }, 10000);
+
+    const handleActivityChanged = () => {
+      void loadPoints();
+    };
+
+    const handleFocus = () => {
+      void loadPoints();
+    };
+
+    window.addEventListener("trasmart:activity-changed", handleActivityChanged);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener(
+        "trasmart:activity-changed",
+        handleActivityChanged,
+      );
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [user?.id, loadPoints]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -120,10 +165,10 @@ export default function AccountRoute() {
           <h2>My Account</h2>
           <p>Kelola informasi profil akun kamu</p>
         </div>
-        <button className={styles.notificationBtn}>
-          <Bell size={24} />
-          <span className={styles.notificationBadge}></span>
-        </button>
+        <NotificationBell
+          buttonClassName={styles.notificationBtn}
+          badgeClassName={styles.notificationBadge}
+        />
       </div>
 
       <div className={styles.contentWrapper}>
@@ -367,16 +412,16 @@ export default function AccountRoute() {
         </div>
 
         <div className={styles.sidebar}>
-          <div className={styles.statsCard}>
-            <h3 className={styles.statsTitle}>Account Stats</h3>
-            <div className={styles.statItem}>
-              <span className={styles.statLabel}>Total Poin</span>
-              <span className={styles.statValue}>350 Pts</span>
+          <div className={styles.pointsCard}>
+            <p className={styles.pointsCaption}>Saldo Poin Aktif</p>
+            <div className={styles.pointsValueWrap}>
+              <span className={styles.pointsValue}>{pointBalance}</span>
+              <span className={styles.pointsUnit}>Pts</span>
             </div>
-            <div className={styles.statItem}>
-              <span className={styles.statLabel}>Total Setor</span>
-              <span className={styles.statValue}>12.5 kg</span>
-            </div>
+            <p className={styles.pointsHint}>
+              Otomatis sinkron dari transaksi berhasil dan penukaran reward.
+            </p>
+            {pointError && <p className={styles.pointsError}>{pointError}</p>}
           </div>
 
           <div className={styles.actionsCard}>

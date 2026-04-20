@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Leaf, MapPin, Bell, HandCoins } from "lucide-react";
+import { Leaf, MapPin, HandCoins } from "lucide-react";
 import styles from "./dashboard.module.scss";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 import { getDashboardData, formatDisplayDate } from "@/lib/mock/dashboard";
 import type {
@@ -88,10 +89,10 @@ export default function DashboardRoute() {
           <h2>Points Wallet</h2>
           <p>Pantau poin dan riwayat setoran sampahmu di sini.</p>
         </div>
-        <button className={styles.notificationBtn}>
-          <Bell size={24} />
-          <span className={styles.notificationBadge}></span>
-        </button>
+        <NotificationBell
+          buttonClassName={styles.notificationBtn}
+          badgeClassName={styles.notificationBadge}
+        />
       </div>
 
       <div className={styles.gridContainer}>

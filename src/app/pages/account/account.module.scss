@@ -368,43 +368,52 @@
   gap: 1.5rem;
 }
 
-/* Stats Card */
-.statsCard {
-  background-color: $white;
+/* Points Card */
+.pointsCard {
+  background: linear-gradient(145deg, #0f6b47 0%, #0d5a3b 100%);
   border-radius: 1.5rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid $gray-300;
+  color: $white;
+  box-shadow: 0 16px 30px rgba(13, 90, 59, 0.2);
 }
 
-.statsTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: $textDark;
-  margin: 0 0 1rem 0;
+.pointsCaption {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.9;
 }
 
-.statItem {
+.pointsValueWrap {
+  margin-top: 0.45rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid $borderColor;
-
-  &:last-child {
-    border-bottom: none;
-  }
+  align-items: baseline;
+  gap: 0.45rem;
 }
 
-.statLabel {
-  font-size: 0.875rem;
-  color: $textGray;
+.pointsValue {
+  font-size: 2.25rem;
+  line-height: 1;
+  font-weight: 800;
 }
 
-.statValue {
+.pointsUnit {
   font-size: 0.95rem;
-  font-weight: 600;
-  color: $accentColor;
+  opacity: 0.85;
+}
+
+.pointsHint {
+  margin: 0.9rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.pointsError {
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  color: #fecaca;
 }
 
 /* Actions Card */

@@ -1,85 +1,141 @@
 "use client";
 
-import React, { useState } from "react";
-import { BookOpen, ShoppingBag, Bell } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./reward.module.scss";
+import { createClient } from "@/lib/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import { getRewardData, redeemReward } from "@/lib/mock/reward";
+import type {
+  RewardItem,
+  RewardCategory,
+  RedeemedRewardItem,
+} from "@/types/reward";
+import NotificationBell from "@/components/layout/NotificationBell";
 
-interface Reward {
-  id: number;
-  name: string;
-  description: string;
-  points: number;
-  category: string;
-  icon: React.ReactNode;
-  image: string;
-  available: number;
+function formatRedeemedDate(isoString: string): string {
+  return new Date(isoString).toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function RewardRoute() {
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [currentPoints] = useState(350);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [currentPoints, setCurrentPoints] = useState(0);
+  const [rewards, setRewards] = useState<RewardItem[]>([]);
+  const [categories, setCategories] = useState<RewardCategory[]>([
+    { id: "all", label: "Semua", count: 0 },
+  ]);
+  const [redeemedRewards, setRedeemedRewards] = useState<RedeemedRewardItem[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [redeemingId, setRedeemingId] = useState<string | null>(null);
 
-  const rewards: Reward[] = [
-    {
-      id: 1,
-      name: "Voucher Kantin",
-      description: "Diskon 20% untuk semua menu",
-      points: 500,
-      category: "food",
-      icon: <ShoppingBag size={24} />,
-      image: "🍜",
-      available: 15,
-    },
-    {
-      id: 2,
-      name: "e-Book Sustainability",
-      description: "Panduan hidup ramah lingkungan",
-      points: 300,
-      category: "education",
-      icon: <BookOpen size={24} />,
-      image: "📚",
-      available: 25,
-    },
-    {
-      id: 5,
-      name: "Coffee Voucher",
-      description: "Gratis kopi premium 1 gelas",
-      points: 250,
-      category: "food",
-      icon: <ShoppingBag size={24} />,
-      image: "☕",
-      available: 30,
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
 
-  const categories = [
-    { id: "all", label: "Semua", count: rewards.length },
-    {
-      id: "food",
-      label: "Makanan",
-      count: rewards.filter((r) => r.category === "food").length,
-    },
-    {
-      id: "education",
-      label: "Edukasi",
-      count: rewards.filter((r) => r.category === "education").length,
-    },
-  ];
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        router.push("/auth/login");
+        return;
+      }
+
+      try {
+        const data = await getRewardData(user.id);
+        setUserId(user.id);
+        setCurrentPoints(data.currentPoints);
+        setRewards(data.rewards);
+        setCategories(data.categories);
+        setRedeemedRewards(data.redeemedRewards);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [router, supabase]);
 
   const filteredRewards =
     selectedCategory === "all"
       ? rewards
       : rewards.filter((r) => r.category === selectedCategory);
 
-  const handleRedeem = (reward: Reward) => {
-    if (currentPoints >= reward.points) {
-      alert(
-        `Berhasil menukar ${reward.name}! Poin berkurang dari ${currentPoints} menjadi ${currentPoints - reward.points}`,
-      );
-    } else {
+  const handleRedeem = async (reward: RewardItem) => {
+    if (!userId) {
+      alert("User tidak ditemukan. Silakan login ulang.");
+      return;
+    }
+
+    if (currentPoints < reward.points) {
       alert("Poin tidak cukup!");
+      return;
+    }
+
+    if (reward.available <= 0) {
+      alert("Reward habis");
+      return;
+    }
+
+    setRedeemingId(reward.id);
+
+    try {
+      const result = await redeemReward(userId, reward.id);
+      setCurrentPoints(result.pointsAfter);
+      setRewards((prev) =>
+        prev.map((item) =>
+          item.id === reward.id
+            ? { ...item, available: result.availableAfter }
+            : item,
+        ),
+      );
+      setRedeemedRewards((prev) => [result.redeemedReward, ...prev].slice(0, 20));
+
+      window.dispatchEvent(
+        new CustomEvent("trasmart:activity-changed", {
+          detail: {
+            type: "redemption",
+            title: "Reward berhasil ditukar",
+            message: `Kamu menukar ${result.rewardName}.`,
+            createdAt: new Date().toISOString(),
+          },
+        }),
+      );
+
+      alert(
+        `Berhasil menukar ${result.rewardName}! Poin sekarang ${result.pointsAfter}.`,
+      );
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal menukar reward");
+    } finally {
+      setRedeemingId(null);
     }
   };
+
+  if (loading) return null;
+
+  if (error) {
+    return (
+      <div className={styles.mainContainer}>
+        <p>Gagal memuat data reward: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.mainContainer}>
@@ -88,10 +144,10 @@ export default function RewardRoute() {
           <h2>Reward Shop</h2>
           <p>Tukarkan poinmu dengan reward menarik!</p>
         </div>
-        <button className={styles.notificationBtn}>
-          <Bell size={24} />
-          <span className={styles.notificationBadge}></span>
-        </button>
+        <NotificationBell
+          buttonClassName={styles.notificationBtn}
+          badgeClassName={styles.notificationBadge}
+        />
       </div>
 
       <div className={styles.pointsCard}>
@@ -148,14 +204,24 @@ export default function RewardRoute() {
                 </div>
                 <button
                   className={`${styles.redeemBtn} ${
-                    currentPoints < reward.points
+                    currentPoints < reward.points || reward.available <= 0
                       ? styles.redeemBtnDisabled
                       : ""
                   }`}
                   onClick={() => handleRedeem(reward)}
-                  disabled={currentPoints < reward.points}
+                  disabled={
+                    currentPoints < reward.points ||
+                    reward.available <= 0 ||
+                    redeemingId === reward.id
+                  }
                 >
-                  {currentPoints < reward.points ? "Tidak Cukup" : "Tukar"}
+                  {reward.available <= 0
+                    ? "Habis"
+                    : currentPoints < reward.points
+                      ? "Tidak Cukup"
+                      : redeemingId === reward.id
+                        ? "Memproses..."
+                        : "Tukar"}
                 </button>
               </div>
             </div>
@@ -168,6 +234,37 @@ export default function RewardRoute() {
           <p>Tidak ada reward di kategori ini</p>
         </div>
       )}
+
+      <section className={styles.redeemedSection}>
+        <div className={styles.redeemedHeader}>
+          <h3>Hadiah Yang Sudah Ditukarkan</h3>
+          <p>Riwayat hadiah yang pernah kamu klaim.</p>
+        </div>
+
+        {redeemedRewards.length === 0 ? (
+          <div className={styles.redeemedEmpty}>
+            <p>Belum ada hadiah yang ditukarkan.</p>
+          </div>
+        ) : (
+          <div className={styles.redeemedList}>
+            {redeemedRewards.map((item) => (
+              <article key={item.id} className={styles.redeemedCard}>
+                <div className={styles.redeemedImage}>{item.image}</div>
+                <div className={styles.redeemedContent}>
+                  <p className={styles.redeemedName}>{item.name}</p>
+                  <p className={styles.redeemedDescription}>{item.description}</p>
+                  <div className={styles.redeemedMeta}>
+                    <span className={styles.redeemedPoints}>-{item.points} pts</span>
+                    <span className={styles.redeemedDate}>
+                      {formatRedeemedDate(item.redeemedAt)}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

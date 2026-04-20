@@ -1,0 +1,116 @@
+.wrapper {
+  position: relative;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  width: min(92vw, 360px);
+  max-height: 420px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.9rem;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+  z-index: 70;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.helper {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.iconWrap {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #166534;
+}
+
+.content {
+  min-width: 0;
+}
+
+.itemTitle {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.itemMessage {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.itemTime {
+  margin: 0.35rem 0 0 0;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.empty {
+  margin: 0;
+  padding: 1.3rem 0.9rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.loading {
+  margin: 0;
+  padding: 1.3rem 0.9rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.error {
+  margin: 0;
+  padding: 1rem 0.9rem;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  background: #fef2f2;
+}

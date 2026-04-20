@@ -4,7 +4,6 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   User,
-  Settings,
   LogOut,
   Menu,
   BaggageClaim,
@@ -24,7 +23,6 @@ const navItems: NavItem[] = [
   },
   { name: "Reward", path: "/reward", icon: <BaggageClaim size={20} /> },
   { name: "Account", path: "/account", icon: <User size={20} /> },
-  { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
 ];
 
 const AppSidebar: React.FC = () => {

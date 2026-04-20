@@ -10,6 +10,10 @@ import type {
   ChartDataPoint,
 } from "@/types/dashboard";
 
+type RawUserRedemptionWithReward = {
+  rewards: { points_required: number } | { points_required: number }[] | null;
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -80,6 +84,36 @@ async function fetchTotalPoints(
 
   if (error) throw new Error(`fetchTotalPoints: ${error.message}`);
   return (data ?? []).reduce((sum, row) => sum + (row.points_earned ?? 0), 0);
+}
+
+function pointsFromRewardRelation(
+  rewardsField: RawUserRedemptionWithReward["rewards"],
+): number {
+  if (!rewardsField) return 0;
+
+  if (Array.isArray(rewardsField)) {
+    return rewardsField[0]?.points_required ?? 0;
+  }
+
+  return rewardsField.points_required ?? 0;
+}
+
+async function fetchTotalRedeemedPoints(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("user_redemptions")
+    .select("rewards(points_required)")
+    .eq("user_id", userId);
+
+  if (error) throw new Error(`fetchTotalRedeemedPoints: ${error.message}`);
+
+  const rows = (data ?? []) as RawUserRedemptionWithReward[];
+  return rows.reduce(
+    (sum, row) => sum + pointsFromRewardRelation(row.rewards),
+    0,
+  );
 }
 
 async function fetchNextReward(
@@ -180,11 +214,14 @@ function transactionsToHistoryEntries(transactions: RawTransaction[]): HistoryEn
 export async function getDashboardData(userId: string): Promise<DashboardData> {
   const supabase = createClient();
 
-  const [totalPoints, monthTransactions, machine] = await Promise.all([
+  const [earnedPoints, redeemedPoints, monthTransactions, machine] = await Promise.all([
     fetchTotalPoints(supabase, userId),
+    fetchTotalRedeemedPoints(supabase, userId),
     fetchMonthTransactions(supabase, userId),
     fetchNearestMachine(supabase),
   ]);
+
+  const totalPoints = Math.max(earnedPoints - redeemedPoints, 0);
 
   const nextReward = await fetchNextReward(supabase, totalPoints);
 

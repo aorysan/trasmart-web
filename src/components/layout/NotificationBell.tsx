@@ -23,7 +23,6 @@ interface Props {
 interface RawTransactionRow {
   id: string;
   points_earned: number;
-  weight_kg: number;
   created_at: string;
   status: string;
   trash_categories: { name: string } | null;
@@ -145,7 +144,7 @@ export default function NotificationBell({
         supabase
           .from("transactions")
           .select(
-            "id, points_earned, weight_kg, created_at, status, trash_categories(name)",
+            "id, points_earned, created_at, status, trash_categories(name)",
           )
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
@@ -177,7 +176,7 @@ export default function NotificationBell({
             : "Update transaksi",
         message:
           row.status === "completed"
-            ? `Kamu dapat ${row.points_earned} poin dari ${row.weight_kg} kg ${row.trash_categories?.name ?? "sampah"}.`
+            ? `Kamu dapat ${row.points_earned} poin dari ${row.trash_categories?.name ?? "sampah"}.`
             : `Transaksi ${row.trash_categories?.name ?? "sampah"} sedang berstatus ${row.status}.`,
         createdAt: row.created_at,
       }));

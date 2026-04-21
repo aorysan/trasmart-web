@@ -148,10 +148,6 @@ export default function DashboardRoute() {
                 <h3>{chart.title}</h3>
                 <p className={styles.chartSubtitle}>{chart.dateRange}</p>
               </div>
-              <select className={styles.chartSelect}>
-                <option>Bulan Ini</option>
-                <option>Bulan Lalu</option>
-              </select>
             </div>
             <div className={styles.chartBars}>
               {chart.data.map((point) => (

@@ -148,7 +148,6 @@ async function fetchMonthTransactions(
       user_id,
       category_id,
       machine_id,
-      weight_kg,
       points_earned,
       created_at,
       status,

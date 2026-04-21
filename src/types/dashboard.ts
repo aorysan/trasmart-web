@@ -7,7 +7,6 @@ export interface RawTransaction {
   user_id: string;
   category_id: string;
   machine_id: string | null;
-  weight_kg: number;
   points_earned: number;
   created_at: string;
   status: string;

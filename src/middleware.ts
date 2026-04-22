@@ -3,9 +3,11 @@ import { createClient } from "@/lib/utils/supabase/middleware";
 
 const protectedRoutes = [
   "/dashboard",
+  "/masukkan-kode",
   "/account",
   "/reward",
   "/pages/dashboard",
+  "/pages/masukkan-kode",
   "/pages/account",
   "/pages/reward",
 ];

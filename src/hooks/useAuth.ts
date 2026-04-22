@@ -11,6 +11,7 @@ export interface UserProfile {
   username: string;
   fullName: string;
   email: string;
+  points: number;
   phone: string;
   address: string;
   avatar: string;
@@ -56,6 +57,7 @@ export function useAuth() {
                 id: user.id,
                 username: "",
                 email: user.email || "",
+                points: 0,
                 fullName: "",
                 phone: "",
                 address: "",
@@ -68,6 +70,7 @@ export function useAuth() {
                 id: user.id,
                 username: data?.username || "",
                 email: user.email || "",
+                points: data?.points ?? 0,
                 fullName: data?.full_name || "",
                 phone: data?.phone || "",
                 address: data?.address || "",
@@ -114,6 +117,7 @@ export function useAuth() {
               id: session.user.id,
               email: session.user.email || "",
               username: data.username || "",
+              points: data.points ?? 0,
               fullName: data.full_name || "",
               phone: data.phone || "",
               address: data.address || "",

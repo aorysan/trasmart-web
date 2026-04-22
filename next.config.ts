@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         source: "/reward",
         destination: "/pages/reward",
       },
+      {
+        source: "/masukkan-kode",
+        destination: "/pages/masukkan-kode",
+      },
     ];
   },
 };

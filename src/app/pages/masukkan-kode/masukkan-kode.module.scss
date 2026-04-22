@@ -1,0 +1,150 @@
+@use "@/components/theme/tokens" as *;
+@use "sass:color";
+
+.mainContainer {
+  padding: 1rem;
+  padding-top: 4rem;
+
+  @media (min-width: $desktop) {
+    padding: 2rem;
+    padding-top: 2rem;
+  }
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.topbarContent {
+  h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: $dark-green;
+    margin: 0;
+
+    @media (min-width: $desktop) {
+      font-size: 2.25rem;
+    }
+  }
+
+  p {
+    color: $textLight;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+
+    @media (min-width: $desktop) {
+      font-size: 1rem;
+    }
+  }
+}
+
+.notificationBtn {
+  background: $white;
+  padding: 0.75rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  position: relative;
+  color: $dark-green;
+  border: 1px solid $gray-100;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.notificationBadge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  background-color: $errorColor;
+  border-radius: 9999px;
+  border: 2px solid $white;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 720px;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+
+  h3 {
+    margin: 0;
+    color: $textDark;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+}
+
+.formHint {
+  margin: 0.4rem 0 1rem;
+  color: $textGray;
+  font-size: 0.9rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $textDark;
+}
+
+.input {
+  border: 1px solid $borderColor;
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  color: $textDark;
+  outline: none;
+
+  &:focus {
+    border-color: $accentColor;
+    box-shadow: 0 0 0 3px rgba(46, 184, 114, 0.15);
+  }
+}
+
+.submitBtn {
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: $white;
+  background: $accentColor;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: color.adjust($accentColor, $lightness: -8%);
+    transform: translateY(-1px);
+  }
+}
+
+.errorText {
+  margin: 0.9rem 0 0;
+  color: $errorColor;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.successText {
+  margin: 0.9rem 0 0;
+  color: $dark-green;
+  font-size: 0.88rem;
+  font-weight: 600;
+}

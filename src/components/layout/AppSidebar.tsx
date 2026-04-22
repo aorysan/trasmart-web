@@ -7,6 +7,7 @@ import {
   LogOut,
   Menu,
   BaggageClaim,
+  ScanLine,
 } from "lucide-react";
 import styles from "./AppSidebar.module.scss";
 import { useRouter, usePathname } from "next/navigation";
@@ -20,6 +21,11 @@ const navItems: NavItem[] = [
     name: "Dashboard",
     path: "/dashboard",
     icon: <LayoutDashboard size={20} />,
+  },
+  {
+    name: "Masukkan Kode",
+    path: "/masukkan-kode",
+    icon: <ScanLine size={20} />,
   },
   { name: "Reward", path: "/reward", icon: <BaggageClaim size={20} /> },
   { name: "Account", path: "/account", icon: <User size={20} /> },

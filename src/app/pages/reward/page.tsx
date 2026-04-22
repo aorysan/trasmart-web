@@ -13,13 +13,15 @@ import type {
 import NotificationBell from "@/components/layout/NotificationBell";
 
 function formatRedeemedDate(isoString: string): string {
-  return new Date(isoString).toLocaleString("id-ID", {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+    hour12: false,
+  }).format(new Date(isoString));
 }
 
 export default function RewardRoute() {
@@ -38,6 +40,20 @@ export default function RewardRoute() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
+  const [redeemedPage, setRedeemedPage] = useState(1);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const redeemedPageSize = 6;
+
+  const showToast = (
+    type: "success" | "error",
+    message: string,
+  ): void => {
+    setToast({ type, message });
+    window.setTimeout(() => setToast(null), 2800);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +77,7 @@ export default function RewardRoute() {
         setRewards(data.rewards);
         setCategories(data.categories);
         setRedeemedRewards(data.redeemedRewards);
+        setRedeemedPage(1);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Terjadi kesalahan");
       } finally {
@@ -78,17 +95,17 @@ export default function RewardRoute() {
 
   const handleRedeem = async (reward: RewardItem) => {
     if (!userId) {
-      alert("User tidak ditemukan. Silakan login ulang.");
+      showToast("error", "User tidak ditemukan. Silakan login ulang.");
       return;
     }
 
     if (currentPoints < reward.points) {
-      alert("Poin tidak cukup!");
+      showToast("error", "Poin tidak cukup!");
       return;
     }
 
     if (reward.available <= 0) {
-      alert("Reward habis");
+      showToast("error", "Reward habis");
       return;
     }
 
@@ -105,6 +122,7 @@ export default function RewardRoute() {
         ),
       );
       setRedeemedRewards((prev) => [result.redeemedReward, ...prev].slice(0, 20));
+      setRedeemedPage(1);
 
       window.dispatchEvent(
         new CustomEvent("trasmart:activity-changed", {
@@ -117,11 +135,15 @@ export default function RewardRoute() {
         }),
       );
 
-      alert(
+      showToast(
+        "success",
         `Berhasil menukar ${result.rewardName}! Poin sekarang ${result.pointsAfter}.`,
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menukar reward");
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Gagal menukar reward",
+      );
     } finally {
       setRedeemingId(null);
     }
@@ -137,8 +159,38 @@ export default function RewardRoute() {
     );
   }
 
+  const redeemedTotalPages = Math.max(
+    Math.ceil(redeemedRewards.length / redeemedPageSize),
+    1,
+  );
+  const clampedRedeemedPage = Math.min(redeemedPage, redeemedTotalPages);
+  const redeemedStart = (clampedRedeemedPage - 1) * redeemedPageSize;
+  const redeemedEnd = redeemedStart + redeemedPageSize;
+  const visibleRedeemedRewards = redeemedRewards.slice(redeemedStart, redeemedEnd);
+
   return (
     <div className={styles.mainContainer}>
+      {toast && (
+        <div
+          className={`${styles.toast} ${
+            toast.type === "success" ? styles.toastSuccess : styles.toastError
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <span className={styles.toastDot} />
+          <p className={styles.toastMessage}>{toast.message}</p>
+          <button
+            type="button"
+            className={styles.toastClose}
+            onClick={() => setToast(null)}
+            aria-label="Tutup notifikasi"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className={styles.topbar}>
         <div className={styles.topbarContent}>
           <h2>Reward Shop</h2>
@@ -246,8 +298,9 @@ export default function RewardRoute() {
             <p>Belum ada hadiah yang ditukarkan.</p>
           </div>
         ) : (
-          <div className={styles.redeemedList}>
-            {redeemedRewards.map((item) => (
+          <>
+            <div className={styles.redeemedList}>
+              {visibleRedeemedRewards.map((item) => (
               <article key={item.id} className={styles.redeemedCard}>
                 <div className={styles.redeemedImage}>{item.image}</div>
                 <div className={styles.redeemedContent}>
@@ -261,8 +314,39 @@ export default function RewardRoute() {
                   </div>
                 </div>
               </article>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {redeemedTotalPages > 1 && (
+              <div className={styles.redeemedPagination}>
+                <button
+                  type="button"
+                  className={styles.redeemedPageBtn}
+                  onClick={() => setRedeemedPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={clampedRedeemedPage === 1}
+                >
+                  Sebelumnya
+                </button>
+
+                <div className={styles.redeemedPageInfo}>
+                  Halaman {clampedRedeemedPage} dari {redeemedTotalPages}
+                </div>
+
+                <button
+                  type="button"
+                  className={styles.redeemedPageBtn}
+                  onClick={() =>
+                    setRedeemedPage((prev) =>
+                      Math.min(prev + 1, redeemedTotalPages),
+                    )
+                  }
+                  disabled={clampedRedeemedPage === redeemedTotalPages}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

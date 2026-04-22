@@ -78,50 +78,40 @@ function normalizeRewardImage(imageUrl: string | null): string {
   return "🎁";
 }
 
-function pointsFromRelation(
-  rewardsField: RawUserRedemptionWithReward["rewards"],
-): number {
-  if (!rewardsField) return 0;
+function getJakartaDateTimeString(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
 
-  if (Array.isArray(rewardsField)) {
-    return rewardsField[0]?.points_required ?? 0;
-  }
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  ) as Record<string, string>;
 
-  return rewardsField.points_required ?? 0;
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}+07:00`;
 }
 
-async function fetchTotalEarnedPoints(
+async function fetchProfilePoints(
   userId: string,
   supabase: ReturnType<typeof createClient>,
 ): Promise<number> {
   const { data, error } = await supabase
-    .from("transactions")
-    .select("points_earned")
-    .eq("user_id", userId)
-    .eq("status", "completed");
+    .from("profiles")
+    .select("points")
+    .eq("id", userId)
+    .maybeSingle();
 
   if (error) {
-    throw new Error(`fetchTotalEarnedPoints: ${error.message}`);
+    throw new Error(`fetchProfilePoints: ${error.message}`);
   }
 
-  return (data ?? []).reduce((total, row) => total + (row.points_earned ?? 0), 0);
-}
-
-async function fetchTotalRedeemedPoints(
-  userId: string,
-  supabase: ReturnType<typeof createClient>,
-): Promise<number> {
-  const { data, error } = await supabase
-    .from("user_redemptions")
-    .select("reward_id, rewards(points_required)")
-    .eq("user_id", userId);
-
-  if (error) {
-    throw new Error(`fetchTotalRedeemedPoints: ${error.message}`);
-  }
-
-  const rows = (data ?? []) as RawUserRedemptionWithReward[];
-  return rows.reduce((total, row) => total + pointsFromRelation(row.rewards), 0);
+  return data?.points ?? 0;
 }
 
 async function fetchRewards(
@@ -237,9 +227,8 @@ function buildCategories(rewards: RewardItem[]): RewardCategory[] {
 export async function getRewardData(userId: string): Promise<RewardData> {
   const supabase = createClient();
 
-  const [earnedPoints, redeemedPoints, rawRewards, usageMap, redeemedRewards] = await Promise.all([
-    fetchTotalEarnedPoints(userId, supabase),
-    fetchTotalRedeemedPoints(userId, supabase),
+  const [currentPoints, rawRewards, usageMap, redeemedRewards] = await Promise.all([
+    fetchProfilePoints(userId, supabase),
     fetchRewards(supabase),
     fetchRewardUsageMap(supabase),
     fetchRedeemedRewards(userId, supabase),
@@ -248,7 +237,7 @@ export async function getRewardData(userId: string): Promise<RewardData> {
   const rewards = rawRewards.map((raw) => toRewardItem(raw, usageMap));
 
   return {
-    currentPoints: Math.max(earnedPoints - redeemedPoints, 0),
+    currentPoints,
     rewards,
     categories: buildCategories(rewards),
     redeemedRewards,
@@ -261,12 +250,7 @@ export async function redeemReward(
 ): Promise<RedeemResult> {
   const supabase = createClient();
 
-  const [earnedPoints, redeemedPoints] = await Promise.all([
-    fetchTotalEarnedPoints(userId, supabase),
-    fetchTotalRedeemedPoints(userId, supabase),
-  ]);
-
-  const currentPoints = Math.max(earnedPoints - redeemedPoints, 0);
+  const currentPoints = await fetchProfilePoints(userId, supabase);
 
   const { data: reward, error: rewardError } = await supabase
     .from("rewards")
@@ -305,18 +289,29 @@ export async function redeemReward(
   const { error: insertError } = await supabase.from("user_redemptions").insert({
     user_id: userId,
     reward_id: reward.id,
-    redeemed_at: new Date().toISOString(),
+    redeemed_at: getJakartaDateTimeString(),
   });
 
   if (insertError) {
     throw new Error(`redeemReward insert: ${insertError.message}`);
   }
 
-  const redeemedAt = new Date().toISOString();
+  const nextPoints = Math.max(currentPoints - (reward.points_required ?? 0), 0);
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({ points: nextPoints })
+    .eq("id", userId);
+
+  if (profileError) {
+    throw new Error(`redeemReward profile update: ${profileError.message}`);
+  }
+
+  const redeemedAt = getJakartaDateTimeString();
 
   return {
     rewardName: reward.name,
-    pointsAfter: Math.max(currentPoints - (reward.points_required ?? 0), 0),
+    pointsAfter: nextPoints,
     availableAfter: Math.max(available - 1, 0),
     redeemedReward: {
       id: `local-${reward.id}-${redeemedAt}`,

@@ -23,10 +23,13 @@ PubSubClient client(espClient);
 // --- VARIABEL ---
 long duration;
 int distance;
+bool sessionValidated = false;
 
-// Fungsi Kirim ke Supabase (Sekarang menerima 2 parameter: Jenis dan Poin)
-void kirimKeSupabase(String jenis, int poin);
+// Fungsi Supabase dan session code
+String getCurrentSessionCode();
+bool waitForSessionCodeInput(const String& expectedCode);
 void refreshSessionExpiry();
+void kirimKeSupabase(String jenis, int poin);
 
 void setup_wifi() {
   delay(10);
@@ -64,9 +67,43 @@ void setup() {
   lcd.backlight();
   setup_wifi();
   client.setServer(mqtt_server, 1883);
+
+  // Validasi session code sebelum masuk ke standby
+  while (!sessionValidated) {
+    String expectedCode = getCurrentSessionCode();
+    if (expectedCode.length() == 0) {
+      expectedCode = "126111"; // fallback ke kode sesi yang ditampilkan
+    }
+
+    lcd.clear();
+    lcd.print(expectedCode);
+    delay(30000);
+
+    lcd.clear();
+    lcd.print("Masukkan kode:");
+    lcd.setCursor(0, 1);
+    lcd.print("Via Serial");
+
+    sessionValidated = waitForSessionCodeInput(expectedCode);
+    if (!sessionValidated) {
+      lcd.clear();
+      lcd.print("Kode salah!");
+      delay(2000);
+    }
+  }
+
+  lcd.clear();
+  lcd.print("Standby...");
+  delay(1000);
 }
 
 void loop() {
+  if (!sessionValidated) {
+    // Menunggu validasi sesi agar tidak mendeteksi sampah sebelum kode benar
+    delay(500);
+    return;
+  }
+
   if (!client.connected()) reconnect();
   client.loop();
 
@@ -228,6 +265,59 @@ void kirimKeSupabase(String jenis, int poin) {
     Serial.println(http.getString());
   }
   http.end();
+}
+
+String getCurrentSessionCode() {
+  if (WiFi.status() != WL_CONNECTED) return "";
+
+  HTTPClient http;
+  String url = String(supabase_url)
+    + "/rest/v1/sessions?machine_id=eq." + String(MACHINE_ID)
+    + "&status=eq.waiting&select=session_code";
+
+  http.begin(url);
+  http.addHeader("apikey", supabase_key);
+  http.addHeader("Authorization", "Bearer " + String(supabase_key));
+
+  int code = http.GET();
+  String sessionCode = "";
+  if (code == 200) {
+    String resp = http.getString();
+    Serial.println("GET sessions response: " + resp);
+
+    int start = resp.indexOf("\"session_code\":\"") + 16;
+    int end = resp.indexOf("\"", start);
+    if (start > 15 && end > start) {
+      sessionCode = resp.substring(start, end);
+    }
+  } else {
+    Serial.printf("GET sessions ERROR: %d\n", code);
+  }
+  http.end();
+  return sessionCode;
+}
+
+bool waitForSessionCodeInput(const String& expectedCode) {
+  unsigned long start = millis();
+  String input = "";
+
+  while (millis() - start < 15000) {
+    while (Serial.available()) {
+      char c = Serial.read();
+      if (c == '\r' || c == '\n') {
+        if (input.length() > 0) {
+          Serial.println();
+          Serial.println("Kode dimasukkan: " + input);
+          return input.equals(expectedCode);
+        }
+      } else {
+        input += c;
+        Serial.print(c);
+      }
+    }
+    delay(50);
+  }
+  return false;
 }
 
 void refreshSessionExpiry() {

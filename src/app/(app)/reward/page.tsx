@@ -47,6 +47,13 @@ export default function RewardRoute() {
   } | null>(null);
   const redeemedPageSize = 6;
 
+  const getCategoryButtonClassName = (categoryId: string): string => {
+    if (categoryId === "all") return styles.categoryBtnAll;
+    if (categoryId === "food") return styles.categoryBtnFood;
+    if (categoryId === "education") return styles.categoryBtnEducation;
+    return styles.categoryBtnOther;
+  };
+
   const showToast = (type: "success" | "error", message: string): void => {
     setToast({ type, message });
     window.setTimeout(() => setToast(null), 2800);
@@ -59,17 +66,20 @@ export default function RewardRoute() {
       setLoading(true);
       setError(null);
 
-      // Force token refresh before any query
-      const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled) return;
-
-      if (!session?.user) {
-        setLoading(false);
-        router.push("/auth/login");
-        return;
-      }
-
       try {
+        // Force token refresh before any query
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (cancelled) return;
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (!session?.user) {
+          router.push("/auth/login");
+          return;
+        }
+
         const data = await getRewardData(session.user.id);
         if (cancelled) return;
         setUserId(session.user.id);
@@ -302,7 +312,7 @@ export default function RewardRoute() {
           {categories.map((category) => (
             <button
               key={category.id}
-              className={`${styles.categoryBtn} ${
+              className={`${styles.categoryBtn} ${getCategoryButtonClassName(category.id)} ${
                 selectedCategory === category.id ? styles.categoryBtnActive : ""
               }`}
               onClick={() => setSelectedCategory(category.id)}

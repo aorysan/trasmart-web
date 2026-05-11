@@ -59,17 +59,20 @@ export default function RewardRoute() {
       setLoading(true);
       setError(null);
 
-      // Force token refresh before any query
-      const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled) return;
-
-      if (!session?.user) {
-        setLoading(false);
-        router.push("/auth/login");
-        return;
-      }
-
       try {
+        // Force token refresh before any query
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (cancelled) return;
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (!session?.user) {
+          router.push("/auth/login");
+          return;
+        }
+
         const data = await getRewardData(session.user.id);
         if (cancelled) return;
         setUserId(session.user.id);

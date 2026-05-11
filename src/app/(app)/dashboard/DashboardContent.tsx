@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Leaf,
@@ -108,9 +108,9 @@ export default function DashboardContent({
   } | null>(null);
   const [extendingSession, setExtendingSession] = useState(false);
 
-  const fetchSessionStatus = useCallback(async () => {
+  const fetchSessionStatus = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/machines/session");
+      const res = await fetch("/api/machines/session", { signal });
       const data = await res.json();
 
       if (data.paired && data.expires_at) {
@@ -131,11 +131,39 @@ export default function DashboardContent({
     }
   }, []);
 
+  // Fetch session once on mount + start local countdown (no HTTP)
+  const prevActiveRef = useRef(activeSession);
   useEffect(() => {
-    fetchSessionStatus();
-    const interval = setInterval(fetchSessionStatus, 1000);
-    return () => clearInterval(interval);
+    const abort = new AbortController();
+
+    fetchSessionStatus(abort.signal);
+
+    const countdown = setInterval(() => {
+      setActiveSession((prev) => {
+        if (!prev) return null;
+        const next = prev.time_remaining - 1;
+        if (next <= 0) return null;
+        return { ...prev, time_remaining: next };
+      });
+    }, 1000);
+
+    return () => {
+      abort.abort();
+      clearInterval(countdown);
+    };
   }, [fetchSessionStatus]);
+
+  // Re-fetch from server when local countdown expires (session hits 0)
+  useEffect(() => {
+    if (!prevActiveRef.current || activeSession) {
+      prevActiveRef.current = activeSession;
+      return;
+    }
+    prevActiveRef.current = activeSession;
+    const abort = new AbortController();
+    fetchSessionStatus(abort.signal);
+    return () => abort.abort();
+  }, [activeSession, fetchSessionStatus]);
 
   const handleExtendSession = async () => {
     setExtendingSession(true);

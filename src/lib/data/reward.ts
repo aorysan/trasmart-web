@@ -132,9 +132,7 @@ async function fetchRewards(
 async function fetchRewardUsageMap(
   supabase: ReturnType<typeof createClient>,
 ): Promise<Map<string, number>> {
-  const { data, error } = await supabase
-    .from("user_redemptions")
-    .select("reward_id");
+  const { data, error } = await supabase.rpc("get_reward_usage_counts");
 
   if (error) {
     throw new Error(`fetchRewardUsageMap: ${error.message}`);
@@ -142,8 +140,7 @@ async function fetchRewardUsageMap(
 
   const map = new Map<string, number>();
   for (const row of data ?? []) {
-    const rewardId = row.reward_id as string;
-    map.set(rewardId, (map.get(rewardId) ?? 0) + 1);
+    map.set(row.reward_id, Number(row.usage_count));
   }
 
   return map;
@@ -266,16 +263,16 @@ export async function redeemReward(
     throw new Error("Reward tidak ditemukan");
   }
 
-  const { data: usageRows, error: usageError } = await supabase
+  const { count, error: usageError } = await supabase
     .from("user_redemptions")
-    .select("id")
+    .select("id", { count: "exact", head: true })
     .eq("reward_id", reward.id);
 
   if (usageError) {
     throw new Error(`redeemReward usage: ${usageError.message}`);
   }
 
-  const used = (usageRows ?? []).length;
+  const used = count ?? 0;
   const available = Math.max((reward.quantity ?? 0) - used, 0);
 
   if (available <= 0) {

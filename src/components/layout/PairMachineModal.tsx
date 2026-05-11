@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState, useCallback } from "react";
+import { FormEvent, useEffect, useState, useCallback, useRef } from "react";
 import { X, Recycle, Clock, RotateCcw, CheckCircle } from "lucide-react";
 import styles from "./PairMachineModal.module.scss";
 
@@ -26,9 +26,9 @@ export default function PairMachineModal({ isOpen, onClose }: PairMachineModalPr
   } | null>(null);
   const [refreshingTimer, setRefreshingTimer] = useState(false);
 
-  const fetchSessionStatus = useCallback(async () => {
+  const fetchSessionStatus = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/machines/session");
+      const res = await fetch("/api/machines/session", { signal });
       const data = await res.json();
 
       if (data.paired && data.expires_at) {
@@ -49,13 +49,41 @@ export default function PairMachineModal({ isOpen, onClose }: PairMachineModalPr
     }
   }, []);
 
+  // Fetch session on modal open + local countdown (no HTTP for ticking)
+  const prevSessionRef = useRef(pairedSession);
   useEffect(() => {
     if (!isOpen) return;
 
-    fetchSessionStatus();
-    const interval = setInterval(fetchSessionStatus, 1000);
-    return () => clearInterval(interval);
+    const abort = new AbortController();
+
+    fetchSessionStatus(abort.signal);
+
+    const countdown = setInterval(() => {
+      setPairedSession((prev) => {
+        if (!prev) return null;
+        const next = prev.time_remaining - 1;
+        if (next <= 0) return null;
+        return { ...prev, time_remaining: next };
+      });
+    }, 1000);
+
+    return () => {
+      abort.abort();
+      clearInterval(countdown);
+    };
   }, [isOpen, fetchSessionStatus]);
+
+  // Re-fetch from server when local countdown expires
+  useEffect(() => {
+    if (!isOpen || !prevSessionRef.current || pairedSession) {
+      prevSessionRef.current = pairedSession;
+      return;
+    }
+    prevSessionRef.current = pairedSession;
+    const abort = new AbortController();
+    fetchSessionStatus(abort.signal);
+    return () => abort.abort();
+  }, [isOpen, pairedSession, fetchSessionStatus]);
 
   useEffect(() => {
     if (!isOpen) {

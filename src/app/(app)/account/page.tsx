@@ -63,13 +63,12 @@ export default function AccountRoute() {
     }
   }, [user]);
 
-  const loadPoints = useCallback(async () => {
+  const loadPoints = useCallback(async (signal?: AbortSignal) => {
     const uid = userIdRef.current;
     if (!uid) return;
     try {
       setPointError(null);
       const supabase = createClient();
-      // Ensure the token is fresh before querying
       await supabase.auth.getSession();
       const { data, error: fetchErr } = await supabase
         .from("profiles")
@@ -77,28 +76,37 @@ export default function AccountRoute() {
         .eq("id", uid)
         .maybeSingle();
       if (fetchErr) throw new Error(fetchErr.message);
+      if (signal?.aborted) return;
       setPointBalance(data?.points ?? 0);
     } catch (err) {
+      if (signal?.aborted) return;
       setPointError(err instanceof Error ? err.message : "Gagal memuat poin");
     }
   }, []);
 
   useEffect(() => {
     if (!user?.id) return;
-    void loadPoints();
-    const intervalId = window.setInterval(() => {
-      void loadPoints();
-    }, 10000);
+    const abort = new AbortController();
+    let mounted = true;
+    let focusTimer: ReturnType<typeof setTimeout> | null = null;
+
+    void loadPoints(abort.signal);
+
     const handleActivityChanged = () => {
-      void loadPoints();
+      void loadPoints(abort.signal);
     };
     const handleFocus = () => {
-      void loadPoints();
+      if (focusTimer) clearTimeout(focusTimer);
+      focusTimer = setTimeout(() => {
+        if (mounted) void loadPoints(abort.signal);
+      }, 2000);
     };
     window.addEventListener("trasmart:activity-changed", handleActivityChanged);
     window.addEventListener("focus", handleFocus);
     return () => {
-      window.clearInterval(intervalId);
+      mounted = false;
+      abort.abort();
+      if (focusTimer) clearTimeout(focusTimer);
       window.removeEventListener(
         "trasmart:activity-changed",
         handleActivityChanged,

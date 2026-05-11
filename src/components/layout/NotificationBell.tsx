@@ -133,8 +133,14 @@ export default function NotificationBell({
     init();
   }, [supabase]);
 
+  const abortRef = useRef<AbortController | null>(null);
   const loadNotifications = useCallback(async (silent = false) => {
     if (!userId) return;
+
+    // Cancel previous in-flight request
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
 
     if (!silent) {
       setLoading(true);
@@ -158,6 +164,8 @@ export default function NotificationBell({
           .order("redeemed_at", { ascending: false })
           .limit(20),
       ]);
+
+      if (abort.signal.aborted) return;
 
       if (transactionRes.error) {
         throw new Error(transactionRes.error.message);
@@ -197,16 +205,19 @@ export default function NotificationBell({
         .sort((a, b) => toTime(b.createdAt) - toTime(a.createdAt))
         .slice(0, 25);
 
+      if (abort.signal.aborted) return;
       setNotifications(merged);
     } catch (err) {
+      if (abort.signal.aborted) return;
       setError(err instanceof Error ? err.message : "Gagal memuat notifikasi");
     } finally {
-      if (!silent) {
+      if (!silent && !abort.signal.aborted) {
         setLoading(false);
       }
     }
   }, [supabase, userId]);
 
+  const lastFetchRef = useRef(0);
   useEffect(() => {
     if (!userId) return;
 
@@ -214,6 +225,7 @@ export default function NotificationBell({
 
     const intervalId = window.setInterval(() => {
       if (!document.hidden) {
+        lastFetchRef.current = Date.now();
         void loadNotifications(true);
       }
     }, 30000);
@@ -246,27 +258,23 @@ export default function NotificationBell({
       void loadNotifications(true);
     };
 
-    const handleFocus = () => {
-      void loadNotifications(true);
-    };
-
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
+      if (!document.hidden && Date.now() - lastFetchRef.current > 5000) {
+        lastFetchRef.current = Date.now();
         void loadNotifications(true);
       }
     };
 
     window.addEventListener("trasmart:activity-changed", handleActivityChange);
-    window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
+      abortRef.current?.abort();
       window.removeEventListener(
         "trasmart:activity-changed",
         handleActivityChange,
       );
-      window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [userId, loadNotifications, pendingKey]);

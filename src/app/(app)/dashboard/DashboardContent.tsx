@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { createClient } from "@/lib/utils/supabase/client";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import Link from "next/link";
 import {
   Leaf,
@@ -68,7 +70,9 @@ function formatDisplayDate(dateStr: string): string {
 
 function getTodayString(): string {
   const now = new Date();
-  const wibTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+  const wibTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
+  );
   const yyyy = wibTime.getFullYear();
   const mm = String(wibTime.getMonth() + 1).padStart(2, "0");
   const dd = String(wibTime.getDate()).padStart(2, "0");
@@ -76,6 +80,7 @@ function getTodayString(): string {
 }
 
 interface DashboardContentProps {
+  userId: string;
   wallet: {
     totalPoints: number;
     redemptionThreshold: number;
@@ -94,6 +99,7 @@ interface DashboardContentProps {
 }
 
 export default function DashboardContent({
+  userId,
   wallet,
   cta,
   chart,
@@ -107,6 +113,80 @@ export default function DashboardContent({
     time_remaining: number;
   } | null>(null);
   const [extendingSession, setExtendingSession] = useState(false);
+
+  // Local state untuk real-time updates (langsung muncul tanpa nunggu server)
+  const [localWallet, setLocalWallet] = useState(wallet);
+  const [localTransactions, setLocalTransactions] = useState(
+    allTransactionsByDate,
+  );
+  // Sync dari props saat navigasi/refresh server
+  useEffect(() => {
+    setLocalWallet(wallet);
+  }, [wallet]);
+  useEffect(() => {
+    setLocalTransactions(allTransactionsByDate);
+  }, [allTransactionsByDate]);
+  const supabase = useMemo(() => createClient(), []);
+  useRealtimeTransactions(userId, () => {
+    supabase
+      .from("transactions")
+      .select(
+        `
+        id, user_id, category_id, machine_id,
+        points_earned, created_at, status,
+        trash_categories ( name, icon_variant ),
+        machines ( name, location_label )
+      `,
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        const today = getTodayString();
+        const entry: HistoryEntry = {
+          id: data.id,
+          label: data.trash_categories?.name ?? "-",
+          machineName: data.machines?.name ?? null,
+          machineLocation: data.machines?.location_label ?? null,
+          time: (() => {
+            const utcDate = new Date(data.created_at.replace(" ", "T") + "Z");
+            return utcDate.toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+              timeZone: "Asia/Jakarta",
+            });
+          })(),
+          points: data.points_earned,
+          iconVariant: (() => {
+            const name = (data.trash_categories?.name ?? "").toLowerCase();
+            if (
+              name.includes("kaleng") ||
+              name.includes("metal") ||
+              name.includes("aluminium")
+            )
+              return "metal" as const;
+            if (
+              name.includes("plastik") ||
+              name.includes("plastic") ||
+              name.includes("botol")
+            )
+              return "plastic" as const;
+            return "other" as const;
+          })(),
+        };
+        setLocalWallet((prev) => ({
+          ...prev,
+          totalPoints: prev.totalPoints + data.points_earned,
+        }));
+        setLocalTransactions((prev) => ({
+          ...prev,
+          [today]: [entry, ...(prev[today] || [])],
+        }));
+      });
+  });
 
   const fetchSessionStatus = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -191,30 +271,42 @@ export default function DashboardContent({
         ? "#F59E0B"
         : "#EF4444";
 
-  const hasChartData = chart.data.length > 0 && chart.data.some(d => d.rawValue > 0);
-  const fallbackDate = hasChartData ? (chart.data.at(-1)?.date ?? getTodayString()) : getTodayString();
+  const hasChartData =
+    chart.data.length > 0 && chart.data.some((d) => d.rawValue > 0);
+  const fallbackDate = hasChartData
+    ? (chart.data.at(-1)?.date ?? getTodayString())
+    : getTodayString();
   const requestedDate = searchParamsDate;
   const selectedDate =
     requestedDate && allTransactionsByDate[requestedDate]
       ? requestedDate
       : fallbackDate;
 
-  const pointsToGo = wallet.redemptionThreshold - wallet.totalPoints;
+  const pointsToGo = localWallet.redemptionThreshold - localWallet.totalPoints;
   const isToday = selectedDate === getTodayString();
-  const visibleHistory: HistoryEntry[] =
-    allTransactionsByDate[selectedDate] ?? [];
+  const visibleHistory: HistoryEntry[] = localTransactions[selectedDate] ?? [];
 
   const historyLabel = isToday ? "Hari Ini" : formatDisplayDate(selectedDate);
   const progressPercent = Math.min(
-    (wallet.totalPoints / Math.max(wallet.redemptionThreshold, 1)) * 100,
-    100
+    (localWallet.totalPoints / Math.max(localWallet.redemptionThreshold, 1)) *
+      100,
+    100,
   );
 
   const chartDisplayData = hasChartData ? chart.data : [];
 
   const totalPoints = chartDisplayData.reduce((sum, d) => sum + d.rawValue, 0);
-  const maxDay = chartDisplayData.length > 0 ? chartDisplayData.reduce((max, d) => (d.rawValue > max.rawValue ? d : max), chartDisplayData[0]) : null;
-  const avgDay = chartDisplayData.length > 0 ? Math.round(totalPoints / chartDisplayData.length) : 0;
+  const maxDay =
+    chartDisplayData.length > 0
+      ? chartDisplayData.reduce(
+          (max, d) => (d.rawValue > max.rawValue ? d : max),
+          chartDisplayData[0],
+        )
+      : null;
+  const avgDay =
+    chartDisplayData.length > 0
+      ? Math.round(totalPoints / chartDisplayData.length)
+      : 0;
 
   return (
     <div className={styles.mainContainer}>
@@ -228,7 +320,9 @@ export default function DashboardContent({
           </div>
           <div className={styles.statCardBody}>
             <span className={styles.statCardLabel}>Total Poin</span>
-            <span className={styles.statCardValue}>{wallet.totalPoints.toLocaleString("id-ID")}</span>
+            <span className={styles.statCardValue}>
+              {localWallet.totalPoints.toLocaleString("id-ID")}
+            </span>
           </div>
         </div>
 
@@ -238,9 +332,15 @@ export default function DashboardContent({
           </div>
           <div className={styles.statCardBody}>
             <span className={styles.statCardLabel}>Target Berikutnya</span>
-            <span className={styles.statCardValue}>{wallet.redemptionLabel !== "-" ? wallet.redemptionLabel : "Belum ada"}</span>
+            <span className={styles.statCardValue}>
+              {localWallet.redemptionLabel !== "-"
+                ? localWallet.redemptionLabel
+                : "Belum ada"}
+            </span>
             <span className={styles.statCardSub}>
-              {wallet.redemptionThreshold > 0 ? `Min. ${wallet.redemptionThreshold.toLocaleString("id-ID")} Pts` : "Setor sampah untuk mulai"}
+              {localWallet.redemptionThreshold > 0
+                ? `Min. ${localWallet.redemptionThreshold.toLocaleString("id-ID")} Pts`
+                : "Setor sampah untuk mulai"}
             </span>
           </div>
         </div>
@@ -251,7 +351,9 @@ export default function DashboardContent({
           </div>
           <div className={styles.statCardBody}>
             <span className={styles.statCardLabel}>Kurang</span>
-            <span className={styles.statCardValue}>{Math.max(0, pointsToGo).toLocaleString("id-ID")}</span>
+            <span className={styles.statCardValue}>
+              {Math.max(0, pointsToGo).toLocaleString("id-ID")}
+            </span>
             <span className={styles.statCardSub}>poin lagi</span>
           </div>
         </div>
@@ -262,7 +364,9 @@ export default function DashboardContent({
           </div>
           <div className={styles.statCardBody}>
             <span className={styles.statCardLabel}>Progress</span>
-            <span className={styles.statCardValue}>{Math.round(progressPercent)}%</span>
+            <span className={styles.statCardValue}>
+              {Math.round(progressPercent)}%
+            </span>
             <div className={styles.statCardProgress}>
               <div
                 className={styles.statCardProgressFill}
@@ -274,13 +378,18 @@ export default function DashboardContent({
       </div>
 
       {/* Primary Action Bar */}
-      <button className={styles.primaryAction} onClick={() => setIsPairModalOpen(true)}>
+      <button
+        className={styles.primaryAction}
+        onClick={() => setIsPairModalOpen(true)}
+      >
         <div className={styles.primaryActionIcon}>
           <ScanLine size={24} />
         </div>
         <div className={styles.primaryActionContent}>
           <span className={styles.primaryActionLabel}>Mulai Setor Sampah</span>
-          <span className={styles.primaryActionDesc}>Masukkan kode untuk pair mesin IoT dan mulai mendaur ulang</span>
+          <span className={styles.primaryActionDesc}>
+            Masukkan kode untuk pair mesin IoT dan mulai mendaur ulang
+          </span>
         </div>
         <ChevronRight size={20} className={styles.primaryActionArrow} />
       </button>
@@ -302,23 +411,31 @@ export default function DashboardContent({
                 <div>
                   <h3 className={styles.chartCardTitle}>Aktivitas Poin</h3>
                   <p className={styles.chartCardSubtitle}>
-                    {chart.dateRange !== "-" ? chart.dateRange : "Belum ada aktivitas bulan ini"}
+                    {chart.dateRange !== "-"
+                      ? chart.dateRange
+                      : "Belum ada aktivitas bulan ini"}
                   </p>
                 </div>
               </div>
               <div className={styles.chartCardStats}>
                 <div className={styles.chartStat}>
                   <Activity size={14} />
-                  <span>Total <strong>{totalPoints.toLocaleString("id-ID")}</strong></span>
+                  <span>
+                    Total <strong>{totalPoints.toLocaleString("id-ID")}</strong>
+                  </span>
                 </div>
                 <div className={styles.chartStat}>
                   <TrendingUp size={14} />
-                  <span>Rata-rata <strong>{avgDay}</strong>/hari</span>
+                  <span>
+                    Rata-rata <strong>{avgDay}</strong>/hari
+                  </span>
                 </div>
                 {maxDay && maxDay.rawValue > 0 && (
                   <div className={styles.chartStat}>
                     <Zap size={14} />
-                    <span>Tertinggi <strong>{maxDay.rawValue}</strong></span>
+                    <span>
+                      Tertinggi <strong>{maxDay.rawValue}</strong>
+                    </span>
                   </div>
                 )}
               </div>
@@ -330,7 +447,11 @@ export default function DashboardContent({
                   {/* Grid lines */}
                   <div className={styles.chartGridLines}>
                     {[100, 75, 50, 25, 0].map((pct) => (
-                      <div key={pct} className={styles.chartGridLine} style={{ bottom: `${pct}%` }}>
+                      <div
+                        key={pct}
+                        className={styles.chartGridLine}
+                        style={{ bottom: `${pct}%` }}
+                      >
                         <span>{pct}%</span>
                       </div>
                     ))}
@@ -339,7 +460,9 @@ export default function DashboardContent({
                   <div className={styles.chartBars}>
                     {chartDisplayData.map((point) => {
                       const isActive = point.date === selectedDate;
-                      const dayLabel = new Date(point.date + "T00:00:00Z").toLocaleDateString("id-ID", {
+                      const dayLabel = new Date(
+                        point.date + "T00:00:00Z",
+                      ).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
                         timeZone: "Asia/Jakarta",
@@ -360,10 +483,14 @@ export default function DashboardContent({
                               }}
                             />
                             {isActive && point.rawValue > 0 && (
-                              <div className={styles.barTooltip}>{point.rawValue} Pts</div>
+                              <div className={styles.barTooltip}>
+                                {point.rawValue} Pts
+                              </div>
                             )}
                           </div>
-                          <span className={`${styles.barLabel} ${isActive ? styles.barLabelActive : ""}`}>
+                          <span
+                            className={`${styles.barLabel} ${isActive ? styles.barLabelActive : ""}`}
+                          >
                             {dayLabel}
                           </span>
                         </Link>
@@ -406,10 +533,13 @@ export default function DashboardContent({
                     <div className={styles.historyInfo}>
                       <p className={styles.historyLabel}>{entry.label}</p>
                       <p className={styles.historyMeta}>
-                        {entry.machineName ?? "Mesin tidak diketahui"} • {entry.time}
+                        {entry.machineName ?? "Mesin tidak diketahui"} •{" "}
+                        {entry.time}
                       </p>
                     </div>
-                    <span className={styles.historyPoints}>+{entry.points}</span>
+                    <span className={styles.historyPoints}>
+                      +{entry.points}
+                    </span>
                   </div>
                 ))
               )}
@@ -429,7 +559,11 @@ export default function DashboardContent({
               </div>
               <h3 className={styles.ctaTitle}>Tukarkan Poinmu!</h3>
               <p className={styles.ctaDesc}>
-                Tinggal <strong>{Math.max(0, pointsToGo).toLocaleString("id-ID")}</strong> poin lagi untuk{" "}
+                Tinggal{" "}
+                <strong>
+                  {Math.max(0, pointsToGo).toLocaleString("id-ID")}
+                </strong>{" "}
+                poin lagi untuk{" "}
                 {cta.rewardLabel !== "-" ? cta.rewardLabel : "reward pertama"}.
               </p>
               <div className={styles.ctaProgressWrap}>
@@ -439,7 +573,9 @@ export default function DashboardContent({
                     style={{ width: `${cta.progressPercent}%` }}
                   />
                 </div>
-                <span className={styles.ctaProgressLabel}>{cta.progressPercent}%</span>
+                <span className={styles.ctaProgressLabel}>
+                  {cta.progressPercent}%
+                </span>
               </div>
               <Link href="/reward" className={styles.ctaButton}>
                 Lihat Katalog
@@ -464,7 +600,10 @@ export default function DashboardContent({
                     <CheckCircle size={14} className={styles.sessionCodeIcon} />
                     {activeSession.session_code}
                   </span>
-                  <span className={styles.sessionTimer} style={{ color: sessionExpiryColor }}>
+                  <span
+                    className={styles.sessionTimer}
+                    style={{ color: sessionExpiryColor }}
+                  >
                     <Clock size={14} />
                     {formatTime(activeSession.time_remaining)}
                   </span>
@@ -486,8 +625,13 @@ export default function DashboardContent({
                     onClick={handleExtendSession}
                     disabled={extendingSession}
                   >
-                    <RotateCcw size={14} className={extendingSession ? styles.spinningIcon : ""} />
-                    {extendingSession ? "Memperpanjang..." : "Perpanjang (+1:30)"}
+                    <RotateCcw
+                      size={14}
+                      className={extendingSession ? styles.spinningIcon : ""}
+                    />
+                    {extendingSession
+                      ? "Memperpanjang..."
+                      : "Perpanjang (+1:30)"}
                   </button>
                   <button
                     className={styles.viewDetailsBtn}
@@ -507,13 +651,19 @@ export default function DashboardContent({
             </div>
             <div className={styles.impactContent}>
               <span className={styles.impactLabel}>Dampak Lingkungan</span>
-              <span className={styles.impactValue}>{wallet.totalPoints.toLocaleString("id-ID")} poin dikonversi</span>
+              <span className={styles.impactValue}>
+                {localWallet.totalPoints.toLocaleString("id-ID")} poin
+                dikonversi
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <PairMachineModal isOpen={isPairModalOpen} onClose={() => setIsPairModalOpen(false)} />
+      <PairMachineModal
+        isOpen={isPairModalOpen}
+        onClose={() => setIsPairModalOpen(false)}
+      />
     </div>
   );
 }

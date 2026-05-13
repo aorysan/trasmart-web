@@ -168,43 +168,13 @@ void getSessionCode() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
-
-  // Step 1: Cari session waiting yang sudah ada
-  String url = String(supabase_url)
-    + "/rest/v1/machine_sessions?machine_id=eq." + String(MACHINE_ID)
-    + "&status=eq.waiting"
-    + "&select=session_code"
-    + "&limit=1";
-  http.begin(url);
-  http.addHeader("apikey", supabase_key);
-
-  int code = http.GET();
-  if (code == 200) {
-    String resp = http.getString();
-    // Response: [{"session_code":"C3D496"}] or []
-    if (resp.indexOf("\"session_code\":\"") != -1) {
-      int start = resp.indexOf("\"session_code\":\"") + 16;
-      int end = resp.indexOf("\"", start);
-      if (start > 16 && end > start) {
-        currentSessionCode = resp.substring(start, end);
-        Serial.print("Session ditemukan: ");
-        Serial.println(currentSessionCode);
-        http.end();
-        return;
-      }
-    }
-  }
-  http.end();
-
-  // Step 2: Tidak ada, generate baru
-  Serial.println("Tidak ada session waiting, generate baru...");
-  url = String(supabase_url) + "/rest/v1/rpc/generate_machine_session";
+  String url = String(supabase_url) + "/rest/v1/rpc/generate_machine_session";
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabase_key);
 
   String payload = "{\"p_machine_id\":\"" + String(MACHINE_ID) + "\"}";
-  code = http.POST(payload);
+  int code = http.POST(payload);
 
   if (code == 200) {
     String resp = http.getString();
@@ -214,16 +184,15 @@ void getSessionCode() {
     } else {
       currentSessionCode = resp;
     }
-    Serial.print("Session baru: ");
+    Serial.print("Session code: ");
     Serial.println(currentSessionCode);
+    isPaired = false;
   } else {
-    Serial.print("Generate session error: ");
+    Serial.print("Session error: ");
     Serial.println(code);
     currentSessionCode = "ERROR";
   }
   http.end();
-
-  isPaired = false;
 }
 
 void checkPairingStatus() {

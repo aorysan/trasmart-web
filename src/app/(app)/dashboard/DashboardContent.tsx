@@ -227,9 +227,15 @@ export default function DashboardContent({
       });
     }, 1000);
 
+    const SYNC_INTERVAL_MS = 30000;
+    const sync = setInterval(() => {
+      fetchSessionStatus();
+    }, SYNC_INTERVAL_MS);
+
     return () => {
       abort.abort();
       clearInterval(countdown);
+      clearInterval(sync);
     };
   }, [fetchSessionStatus]);
 

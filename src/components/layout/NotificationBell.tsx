@@ -22,7 +22,7 @@ interface Props {
 
 interface RawTransactionRow {
   id: string;
-  points_earned: number;
+  poin: number;
   created_at: string;
   status: string;
   trash_categories: { name: string } | null;
@@ -134,88 +134,91 @@ export default function NotificationBell({
   }, [supabase]);
 
   const abortRef = useRef<AbortController | null>(null);
-  const loadNotifications = useCallback(async (silent = false) => {
-    if (!userId) return;
+  const loadNotifications = useCallback(
+    async (silent = false) => {
+      if (!userId) return;
 
-    // Cancel previous in-flight request
-    abortRef.current?.abort();
-    const abort = new AbortController();
-    abortRef.current = abort;
+      // Cancel previous in-flight request
+      abortRef.current?.abort();
+      const abort = new AbortController();
+      abortRef.current = abort;
 
-    if (!silent) {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      const [transactionRes, redemptionRes] = await Promise.all([
-        supabase
-          .from("transactions")
-          .select(
-            "id, points_earned, created_at, status, trash_categories(name)",
-          )
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("user_redemptions")
-          .select("id, redeemed_at, rewards(name, points_required)")
-          .eq("user_id", userId)
-          .order("redeemed_at", { ascending: false })
-          .limit(20),
-      ]);
-
-      if (abort.signal.aborted) return;
-
-      if (transactionRes.error) {
-        throw new Error(transactionRes.error.message);
+      if (!silent) {
+        setLoading(true);
       }
+      setError(null);
 
-      if (redemptionRes.error) {
-        throw new Error(redemptionRes.error.message);
+      try {
+        const [transactionRes, redemptionRes] = await Promise.all([
+          supabase
+            .from("transactions")
+            .select("id, poin, created_at, status, trash_categories(name)")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(20),
+          supabase
+            .from("user_redemptions")
+            .select("id, redeemed_at, rewards(name, points_required)")
+            .eq("user_id", userId)
+            .order("redeemed_at", { ascending: false })
+            .limit(20),
+        ]);
+
+        if (abort.signal.aborted) return;
+
+        if (transactionRes.error) {
+          throw new Error(transactionRes.error.message);
+        }
+
+        if (redemptionRes.error) {
+          throw new Error(redemptionRes.error.message);
+        }
+
+        const transactionItems: NotificationItem[] = (
+          (transactionRes.data ?? []) as unknown as RawTransactionRow[]
+        ).map((row) => ({
+          id: `transaction-${row.id}`,
+          type: "transaction",
+          title:
+            row.status === "completed"
+              ? "Transaksi berhasil"
+              : "Update transaksi",
+          message:
+            row.status === "completed"
+              ? `Kamu dapat ${row.poin} poin dari ${row.trash_categories?.name ?? "sampah"}.`
+              : `Transaksi ${row.trash_categories?.name ?? "sampah"} sedang berstatus ${row.status}.`,
+          createdAt: row.created_at,
+        }));
+
+        const redemptionItems: NotificationItem[] = (
+          (redemptionRes.data ?? []) as unknown as RawRedemptionRow[]
+        ).map((row) => ({
+          id: `redemption-${row.id}`,
+          type: "redemption",
+          title: "Reward berhasil ditukar",
+          message: `Kamu menukar ${row.rewards?.name ?? "reward"} sebesar ${row.rewards?.points_required ?? 0} poin.`,
+          createdAt: row.redeemed_at ?? new Date().toISOString(),
+        }));
+
+        const merged = [...transactionItems, ...redemptionItems]
+          .sort((a, b) => toTime(b.createdAt) - toTime(a.createdAt))
+          .slice(0, 25);
+
+        if (abort.signal.aborted) return;
+        setNotifications(merged);
+      } catch (err) {
+        if (abort.signal.aborted) return;
+        setError(
+          err instanceof Error ? err.message : "Gagal memuat notifikasi",
+        );
+      } finally {
+        if (!silent && !abort.signal.aborted) {
+          setLoading(false);
+        }
       }
-
-      const transactionItems: NotificationItem[] = (
-        (transactionRes.data ?? []) as unknown as RawTransactionRow[]
-      ).map((row) => ({
-        id: `transaction-${row.id}`,
-        type: "transaction",
-        title:
-          row.status === "completed"
-            ? "Transaksi berhasil"
-            : "Update transaksi",
-        message:
-          row.status === "completed"
-            ? `Kamu dapat ${row.points_earned} poin dari ${row.trash_categories?.name ?? "sampah"}.`
-            : `Transaksi ${row.trash_categories?.name ?? "sampah"} sedang berstatus ${row.status}.`,
-        createdAt: row.created_at,
-      }));
-
-      const redemptionItems: NotificationItem[] = (
-        (redemptionRes.data ?? []) as unknown as RawRedemptionRow[]
-      ).map((row) => ({
-        id: `redemption-${row.id}`,
-        type: "redemption",
-        title: "Reward berhasil ditukar",
-        message: `Kamu menukar ${row.rewards?.name ?? "reward"} sebesar ${row.rewards?.points_required ?? 0} poin.`,
-        createdAt: row.redeemed_at ?? new Date().toISOString(),
-      }));
-
-      const merged = [...transactionItems, ...redemptionItems]
-        .sort((a, b) => toTime(b.createdAt) - toTime(a.createdAt))
-        .slice(0, 25);
-
-      if (abort.signal.aborted) return;
-      setNotifications(merged);
-    } catch (err) {
-      if (abort.signal.aborted) return;
-      setError(err instanceof Error ? err.message : "Gagal memuat notifikasi");
-    } finally {
-      if (!silent && !abort.signal.aborted) {
-        setLoading(false);
-      }
-    }
-  }, [supabase, userId]);
+    },
+    [supabase, userId],
+  );
 
   const lastFetchRef = useRef(0);
   useEffect(() => {
@@ -314,7 +317,11 @@ export default function NotificationBell({
       </button>
 
       {isOpen && (
-        <div className={styles.panel} role="dialog" aria-label="Daftar notifikasi">
+        <div
+          className={styles.panel}
+          role="dialog"
+          aria-label="Daftar notifikasi"
+        >
           <div className={styles.header}>
             <p className={styles.title}>Notifikasi</p>
             <p className={styles.helper}>{notifications.length} terbaru</p>
@@ -332,11 +339,15 @@ export default function NotificationBell({
             <ul className={styles.list}>
               {notifications.map((item) => (
                 <li key={item.id} className={styles.item}>
-                  <div className={styles.iconWrap}>{notificationIcon(item.type)}</div>
+                  <div className={styles.iconWrap}>
+                    {notificationIcon(item.type)}
+                  </div>
                   <div className={styles.content}>
                     <p className={styles.itemTitle}>{item.title}</p>
                     <p className={styles.itemMessage}>{item.message}</p>
-                    <p className={styles.itemTime}>{getRelativeTime(item.createdAt)}</p>
+                    <p className={styles.itemTime}>
+                      {getRelativeTime(item.createdAt)}
+                    </p>
                   </div>
                 </li>
               ))}

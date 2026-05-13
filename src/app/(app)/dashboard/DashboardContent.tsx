@@ -133,7 +133,7 @@ export default function DashboardContent({
       .select(
         `
         id, user_id, category_id, machine_id,
-        points_earned, created_at, status,
+        poin, created_at, status,
         trash_categories ( name, icon_variant ),
         machines ( name, location_label )
       `,
@@ -159,7 +159,7 @@ export default function DashboardContent({
               timeZone: "Asia/Jakarta",
             });
           })(),
-          points: data.points_earned,
+          points: data.poin,
           iconVariant: (() => {
             const name = (data.trash_categories?.name ?? "").toLowerCase();
             if (
@@ -179,7 +179,7 @@ export default function DashboardContent({
         };
         setLocalWallet((prev) => ({
           ...prev,
-          totalPoints: prev.totalPoints + data.points_earned,
+          totalPoints: prev.totalPoints + data.poin,
         }));
         setLocalTransactions((prev) => ({
           ...prev,

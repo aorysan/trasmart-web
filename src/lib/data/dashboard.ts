@@ -117,7 +117,7 @@ async function fetchMonthTransactions(
       user_id,
       category_id,
       machine_id,
-      points_earned,
+      poin,
       created_at,
       status,
       trash_categories ( name, icon_variant ),
@@ -155,7 +155,7 @@ function transactionsToChartData(transactions: RawTransaction[]): ChartDataPoint
   const grouped = new Map<string, number>();
   for (const t of transactions) {
     const date = toLocalDateStringWIB(t.created_at);
-    grouped.set(date, (grouped.get(date) ?? 0) + (t.points_earned ?? 0));
+    grouped.set(date, (grouped.get(date) ?? 0) + (t.poin ?? 0));
   }
   const raw = Array.from(grouped.entries())
     .sort(([a], [b]) => a.localeCompare(b))
@@ -178,7 +178,7 @@ function transactionsToHistoryEntries(transactions: RawTransaction[]): HistoryEn
     machineName: t.machines?.name ?? null,
     machineLocation: t.machines?.location_label ?? null,
     time: formatTime(t.created_at),
-    points: t.points_earned,
+    points: t.poin,
     iconVariant: resolveIconVariant(t.trash_categories?.name ?? null),
   }));
 }

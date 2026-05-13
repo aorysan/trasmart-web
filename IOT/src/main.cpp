@@ -5,31 +5,32 @@
 #include <LiquidCrystal_I2C.h>
 #include "secrets.h"
 
-// MQTT Broker (bukan secret)
 const char* mqtt_server = "broker.hivemq.com";
 
-// --- DEFINISI PIN ---
 #define PIN_TRIG 5
 #define PIN_ECHO 18
 #define PIN_PROX 19
 #define PIN_SERVO 13
 
-// --- INISIALISASI OBJEK ---
 Servo myServo;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// --- VARIABEL ---
 long duration;
 int distance;
 bool sessionValidated = false;
 String currentSessionId = "";
 String currentSessionCode = "";
 
-// Fungsi Supabase dan session code
-String getCurrentSessionCode();
-bool waitForSessionCodeInputAndPoll(const String& expectedCode, String sessionId);
+String currentSessionCode = "";
+bool isPaired = false;
+unsigned long lastPairCheck = 0;
+const unsigned long PAIR_CHECK_INTERVAL = 5000;
+
+void generateOrGetSessionCode();
+void checkPairingStatus();
+void kirimKeSupabase(String jenis, int poin);
 void refreshSessionExpiry();
 void kirimKeSupabase(String jenis, int poin);
 bool checkSessionPaired(String sessionId);
@@ -71,32 +72,14 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
 
-  // Validasi session code sebelum masuk ke standby
-  while (!sessionValidated) {
-    currentSessionCode = getCurrentSessionCode();
-    
-    if (currentSessionCode.length() == 0) {
-      lcd.clear();
-      lcd.print("Fetch Code...");
-      lcd.setCursor(0, 1);
-      lcd.print("Retry in 5s");
-      delay(5000);
-      continue;
-    }
-
-    // Poll untuk user input & status changes (dengan display kode terus-menerus)
-    sessionValidated = waitForSessionCodeInputAndPoll(currentSessionCode, currentSessionId);
-    
-    if (!sessionValidated) {
-      lcd.clear();
-      lcd.print("Kode salah!");
-      delay(2000);
-    }
-  }
+  generateOrGetSessionCode();
 
   lcd.clear();
-  lcd.print("Paired!");
-  delay(1000);
+  lcd.setCursor(0, 0);
+  lcd.print("Kode: ");
+  lcd.print(currentSessionCode);
+  lcd.setCursor(0, 1);
+  lcd.print("Scan di web   ");
 }
 
 void loop() {
@@ -109,7 +92,27 @@ void loop() {
   if (!client.connected()) reconnect();
   client.loop();
 
-  // 1. Baca Jarak (Sensor Ultrasonik)
+  unsigned long now = millis();
+  if (now - lastPairCheck > PAIR_CHECK_INTERVAL) {
+    lastPairCheck = now;
+    bool wasPaired = isPaired;
+    checkPairingStatus();
+    if (wasPaired && !isPaired) {
+      generateOrGetSessionCode();
+    }
+  }
+
+  if (!isPaired) {
+    lcd.setCursor(0, 0);
+    lcd.print("Kode: ");
+    lcd.print(currentSessionCode);
+    lcd.print(" ");
+    lcd.setCursor(0, 1);
+    lcd.print("Scan di web   ");
+    delay(200);
+    return;
+  }
+
   digitalWrite(PIN_TRIG, LOW);
   delayMicroseconds(2);
   digitalWrite(PIN_TRIG, HIGH);
@@ -121,7 +124,6 @@ void loop() {
   lcd.setCursor(0, 0);
   lcd.print("Standby...      ");
 
-  // 2. Jika ada sampah terdeteksi masuk
   if (distance > 0 && distance < 10) {
     lcd.clear();
     lcd.print("Benda Masuk!");
@@ -129,9 +131,8 @@ void loop() {
     unsigned long startTime = millis();
     bool logamDitemukan = false;
 
-    // 3. Menunggu deteksi logam selama 20 detik
-    while (millis() - startTime < 10000) { 
-      int sisaWaktu = 10 - ((millis() - startTime) / 1000);
+    while (millis() - startTime < 20000) { 
+      int sisaWaktu = 20 - ((millis() - startTime) / 1000);
       
       lcd.setCursor(0, 1);
       lcd.print("Cek Logam: ");
@@ -140,41 +141,26 @@ void loop() {
 
       if (digitalRead(PIN_PROX) == LOW) {
         logamDitemukan = true;
-        break; // Keluar loop jika logam terdeteksi sebelum 20 detik
+        break;
       }
       delay(100);
     }
 
     lcd.clear();
     if (logamDitemukan) {
-      // --- KONDISI LOGAM ---
       lcd.print("LOGAM +15 Poin");
-      
-      // MQTT tetap jalan untuk monitor real-time
       client.publish("vending/data", "Logam Terdeteksi");
-      
-      // Kirim data ke tabel transactions di Supabase
-      // Fungsi ini akan mengirim payload dengan UUID Kategori Logam
       kirimKeSupabase("LOGAM", 15);
-      
-      myServo.write(180); // Miring ke wadah Logam
-    } 
-    else {
-      // --- KONDISI PLASTIK (Jika 20 detik habis tanpa logam) ---
+      myServo.write(180);
+    } else {
       lcd.print("PLASTIK +10 Poin");
-      
       client.publish("vending/data", "Plastik Terdeteksi");
-      
-      // Kirim data ke tabel transactions di Supabase
-      // Fungsi ini akan mengirim payload dengan UUID Kategori Plastik
       kirimKeSupabase("PLASTIK", 10);
-      
-      myServo.write(0);  // Miring ke wadah Plastik
+      myServo.write(0);
     }
 
-    // 4. Proses pembuangan selesai
-    delay(3000); 
-    myServo.write(90); // Kembali ke posisi datar
+    delay(3000);
+    myServo.write(90);
     lcd.clear();
     lcd.print("Selesai!");
     delay(1000);
@@ -183,7 +169,66 @@ void loop() {
   delay(200);
 }
 
-// --- FUNGSI KIRIM TRANSAKSI KE SUPABASE ---
+void generateOrGetSessionCode() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  String url = String(supabase_url) + "/rest/v1/rpc/generate_machine_session";
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("apikey", supabase_key);
+
+  String payload = "{\"p_machine_id\":\"" + String(MACHINE_ID) + "\"}";
+  int code = http.POST(payload);
+
+  if (code == 200) {
+    String resp = http.getString();
+    resp.trim();
+    if (resp.length() >= 2 && resp.charAt(0) == '"' && resp.charAt(resp.length() - 1) == '"') {
+      currentSessionCode = resp.substring(1, resp.length() - 1);
+    } else {
+      currentSessionCode = resp;
+    }
+    Serial.print("Session code: ");
+    Serial.println(currentSessionCode);
+    isPaired = false;
+  } else {
+    Serial.print("Generate session error: ");
+    Serial.println(code);
+    currentSessionCode = "ERROR";
+  }
+  http.end();
+}
+
+void checkPairingStatus() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  String url = String(supabase_url)
+    + "/rest/v1/machines?id=eq." + String(MACHINE_ID)
+    + "&select=current_user_id";
+  http.begin(url);
+  http.addHeader("apikey", supabase_key);
+
+  int code = http.GET();
+  if (code == 200) {
+    String resp = http.getString();
+    if (resp.indexOf("\"current_user_id\":null") != -1) {
+      isPaired = false;
+    } else if (resp.indexOf("\"current_user_id\":\"") != -1) {
+      isPaired = true;
+      Serial.println("User paired!");
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Selamat Datang!");
+      lcd.setCursor(0, 1);
+      lcd.print("Buang sampah!");
+      delay(2000);
+    }
+  }
+  http.end();
+}
+
 void kirimKeSupabase(String jenis, int poin) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi tidak terhubung!");
@@ -192,51 +237,30 @@ void kirimKeSupabase(String jenis, int poin) {
 
   HTTPClient http;
 
-  // ========================================
-  // STEP 1: Ambil current_user_id dari mesin
-  // ========================================
   String getUrl = String(supabase_url)
     + "/rest/v1/machines?id=eq." + String(MACHINE_ID)
     + "&select=current_user_id";
-
   http.begin(getUrl);
   http.addHeader("apikey", supabase_key);
-  http.addHeader("Authorization", "Bearer " + String(supabase_key));
 
   int getCode = http.GET();
   String userId = "";
 
   if (getCode == 200) {
     String resp = http.getString();
-    Serial.println("GET machines response: " + resp);
-
-    // Parse JSON
     int start = resp.indexOf("\"current_user_id\":\"") + 19;
     int end = resp.indexOf("\"", start);
     if (start > 19 && end > start) {
       userId = resp.substring(start, end);
     }
-  } else {
-    Serial.printf("GET machines ERROR: %d\n", getCode);
   }
   http.end();
 
-  // Cek apakah ada user yang terpair
   if (userId == "" || userId == "null") {
-    Serial.println("ERROR: Tidak ada user yang terpair dengan mesin ini!");
-    lcd.clear();
-    lcd.print("Error: No User");
-    lcd.setCursor(0, 1);
-    lcd.print("Pair dulu!");
-    delay(3000);
+    Serial.println("ERROR: Tidak ada user yang terpair!");
     return;
   }
 
-  Serial.println("User ID ditemukan: " + userId);
-
-  // ========================================
-  // STEP 2: Kirim transaksi dengan user_id
-  // ========================================
   String category_id = (jenis == "LOGAM") 
     ? String(CATEGORY_LOGAM) 
     : String(CATEGORY_PLASTIK);
@@ -244,7 +268,6 @@ void kirimKeSupabase(String jenis, int poin) {
   http.begin(String(supabase_url) + "/rest/v1/transactions");
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabase_key);
-  http.addHeader("Authorization", "Bearer " + String(supabase_key));
   http.addHeader("Prefer", "return=minimal");
 
   String jsonPayload = "{"
@@ -256,14 +279,13 @@ void kirimKeSupabase(String jenis, int poin) {
   "}";
 
   Serial.println("Payload: " + jsonPayload);
-
   int postCode = http.POST(jsonPayload);
 
   if (postCode == 201) {
-    Serial.println("✅ Transaksi berhasil dikirim!");
+    Serial.println("Transaksi berhasil!");
     refreshSessionExpiry();
   } else {
-    Serial.printf("❌ POST Error: %d\n", postCode);
+    Serial.printf("POST Error: %d\n", postCode);
     Serial.println(http.getString());
   }
   http.end();
@@ -424,13 +446,12 @@ void refreshSessionExpiry() {
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabase_key);
-  http.addHeader("Authorization", "Bearer " + String(supabase_key));
   String payload = "{\"p_machine_id\":\"" + String(MACHINE_ID) + "\"}";
   int code = http.POST(payload);
   if (code == 200) {
-    Serial.println("✅ Session timer refreshed!");
+    Serial.println("Session timer refreshed!");
   } else {
-    Serial.printf("⚠️ Failed to refresh session: %d\n", code);
+    Serial.printf("Refresh session error: %d\n", code);
   }
   http.end();
 }

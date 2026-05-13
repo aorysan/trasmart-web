@@ -23,9 +23,11 @@ int distance;
 String currentSessionCode = "";
 bool isPaired = false;
 unsigned long lastPairCheck = 0;
+unsigned long lastSessionRefresh = 0;
 const unsigned long PAIR_CHECK_INTERVAL = 5000;
+const unsigned long SESSION_REFRESH_INTERVAL = 30000;
 
-void generateOrGetSessionCode();
+void getSessionCode();
 void checkPairingStatus();
 void kirimKeSupabase(String jenis, int poin);
 void refreshSessionExpiry();
@@ -67,7 +69,7 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
 
-  generateOrGetSessionCode();
+  getSessionCode();
 
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -87,11 +89,15 @@ void loop() {
     bool wasPaired = isPaired;
     checkPairingStatus();
     if (wasPaired && !isPaired) {
-      generateOrGetSessionCode();
+      getSessionCode();
     }
   }
 
   if (!isPaired) {
+    if (now - lastSessionRefresh > SESSION_REFRESH_INTERVAL) {
+      lastSessionRefresh = now;
+      getSessionCode();
+    }
     lcd.setCursor(0, 0);
     lcd.print("Kode: ");
     lcd.print(currentSessionCode);
@@ -158,17 +164,47 @@ void loop() {
   delay(200);
 }
 
-void generateOrGetSessionCode() {
+void getSessionCode() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
-  String url = String(supabase_url) + "/rest/v1/rpc/generate_machine_session";
+
+  // Step 1: Cari session waiting yang sudah ada
+  String url = String(supabase_url)
+    + "/rest/v1/machine_sessions?machine_id=eq." + String(MACHINE_ID)
+    + "&status=eq.waiting"
+    + "&select=session_code"
+    + "&limit=1";
+  http.begin(url);
+  http.addHeader("apikey", supabase_key);
+
+  int code = http.GET();
+  if (code == 200) {
+    String resp = http.getString();
+    // Response: [{"session_code":"C3D496"}] or []
+    if (resp.indexOf("\"session_code\":\"") != -1) {
+      int start = resp.indexOf("\"session_code\":\"") + 16;
+      int end = resp.indexOf("\"", start);
+      if (start > 16 && end > start) {
+        currentSessionCode = resp.substring(start, end);
+        Serial.print("Session ditemukan: ");
+        Serial.println(currentSessionCode);
+        http.end();
+        return;
+      }
+    }
+  }
+  http.end();
+
+  // Step 2: Tidak ada, generate baru
+  Serial.println("Tidak ada session waiting, generate baru...");
+  url = String(supabase_url) + "/rest/v1/rpc/generate_machine_session";
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabase_key);
 
   String payload = "{\"p_machine_id\":\"" + String(MACHINE_ID) + "\"}";
-  int code = http.POST(payload);
+  code = http.POST(payload);
 
   if (code == 200) {
     String resp = http.getString();
@@ -178,15 +214,16 @@ void generateOrGetSessionCode() {
     } else {
       currentSessionCode = resp;
     }
-    Serial.print("Session code: ");
+    Serial.print("Session baru: ");
     Serial.println(currentSessionCode);
-    isPaired = false;
   } else {
     Serial.print("Generate session error: ");
     Serial.println(code);
     currentSessionCode = "ERROR";
   }
   http.end();
+
+  isPaired = false;
 }
 
 void checkPairingStatus() {

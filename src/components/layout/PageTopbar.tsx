@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import dynamic from "next/dynamic";
 
 const NotificationBell = dynamic(
@@ -16,7 +17,7 @@ interface PageTopbarProps {
   notificationBadgeClassName: string;
 }
 
-export default function PageTopbar({
+const PageTopbar = memo(function PageTopbar({
   title,
   description,
   topbarClassName,
@@ -36,4 +37,6 @@ export default function PageTopbar({
       />
     </div>
   );
-}
+});
+
+export default PageTopbar;

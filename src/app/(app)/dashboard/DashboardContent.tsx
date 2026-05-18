@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@/lib/utils/supabase/client";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import Link from "next/link";
@@ -98,7 +98,7 @@ interface DashboardContentProps {
   searchParamsDate?: string;
 }
 
-export default function DashboardContent({
+const DashboardContent = memo(function DashboardContent({
   userId,
   wallet,
   cta,
@@ -142,16 +142,23 @@ export default function DashboardContent({
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => {
-        if (!data) return;
+      .then((result: { data: unknown }) => {
+        const d = result.data as {
+          id: string;
+          poin: number;
+          created_at: string;
+          trash_categories: { name: string } | null;
+          machines: { name: string; location_label: string } | null;
+        } | null;
+        if (!d) return;
         const today = getTodayString();
         const entry: HistoryEntry = {
-          id: data.id,
-          label: data.trash_categories?.name ?? "-",
-          machineName: data.machines?.name ?? null,
-          machineLocation: data.machines?.location_label ?? null,
+          id: d.id,
+          label: d.trash_categories?.name ?? "-",
+          machineName: d.machines?.name ?? null,
+          machineLocation: d.machines?.location_label ?? null,
           time: (() => {
-            const utcDate = new Date(data.created_at.replace(" ", "T") + "Z");
+            const utcDate = new Date(d.created_at.replace(" ", "T") + "Z");
             return utcDate.toLocaleTimeString("id-ID", {
               hour: "2-digit",
               minute: "2-digit",
@@ -159,9 +166,9 @@ export default function DashboardContent({
               timeZone: "Asia/Jakarta",
             });
           })(),
-          points: data.poin,
+          points: d.poin,
           iconVariant: (() => {
-            const name = (data.trash_categories?.name ?? "").toLowerCase();
+            const name = (d.trash_categories?.name ?? "").toLowerCase();
             if (
               name.includes("kaleng") ||
               name.includes("metal") ||
@@ -179,7 +186,7 @@ export default function DashboardContent({
         };
         setLocalWallet((prev) => ({
           ...prev,
-          totalPoints: prev.totalPoints + data.poin,
+          totalPoints: prev.totalPoints + d.poin,
         }));
         setLocalTransactions((prev) => ({
           ...prev,
@@ -669,10 +676,11 @@ export default function DashboardContent({
       <PairMachineModal
         isOpen={isPairModalOpen}
         onClose={() => setIsPairModalOpen(false)}
+        onPairSuccess={() => fetchSessionStatus()}
       />
     </div>
   );
-}
+});
 
 function DashboardTopbar() {
   return (
@@ -698,3 +706,5 @@ function DashboardTopbar() {
     </header>
   );
 }
+
+export default DashboardContent;

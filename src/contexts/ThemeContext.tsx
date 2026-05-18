@@ -1,7 +1,7 @@
 // src/context/ThemeContext.tsx
 "use client";
 
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect, useMemo, useCallback, ReactNode } from "react";
 import {
   getInitialTheme,
   getNextTheme,
@@ -20,23 +20,23 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    const newTheme = getNextTheme(theme);
-    setTheme(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-  };
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const newTheme = getNextTheme(prev);
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+      return newTheme;
+    });
+  }, []);
 
-  if (!mounted) return <>{children}</>;
+  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

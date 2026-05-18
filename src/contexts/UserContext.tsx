@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, useMemo, ReactNode } from "react";
 import { useAuth, UserProfile } from "@/hooks/useAuth";
 
 interface UserContextType {
@@ -19,19 +19,22 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const { user, userProfile, loading, error, updateProfile, signOut, changePassword, sendPasswordReset } = useAuth();
 
+  const value = useMemo(
+    () => ({
+      user: userProfile,
+      isAuthenticated: !!user,
+      loading,
+      error,
+      updateUser: updateProfile,
+      signOut,
+      changePassword,
+      sendPasswordReset,
+    }),
+    [userProfile, user, loading, error, updateProfile, signOut, changePassword, sendPasswordReset],
+  );
+
   return (
-    <UserContext.Provider
-      value={{
-        user: userProfile,
-        isAuthenticated: !!user,
-        loading,
-        error,
-        updateUser: updateProfile,
-        signOut,
-        changePassword,
-        sendPasswordReset,
-      }}
-    >
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );

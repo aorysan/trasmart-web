@@ -306,44 +306,99 @@
 /* Social Buttons Container */
 .socialContainer {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
+
+  > * {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .socialBtn {
-  flex: 1;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
   font-weight: 500;
-  border: 1px solid $borderColor;
-  background-color: $white;
-  color: $textDark;
+  border: 1px solid #dce3da;
+  background: #f6f8f5;
+  color: #2a3a2c;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  min-height: 44px;
+  min-height: 40px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition:
+    background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    transition: border-color 0.3s ease;
+    pointer-events: none;
+  }
+
+  svg {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
 
   &:hover {
-    background-color: $gray-50;
-    border-color: $gray-300;
+    color: white;
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+    svg { transform: scale(1.1); }
+
+    &::before { border-color: rgba(255, 255, 255, 0.25); }
+  }
+
+  &[title*="Google"]:hover {
+    background: linear-gradient(135deg, #4285f4, #3571d6);
+  }
+
+  &[title*="GitHub"]:hover {
+    background: linear-gradient(135deg, #24292f, #1b1f24);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   &:focus-visible {
     outline: 2px solid $dark-green;
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.35;
     cursor: not-allowed;
-  }
-
-  svg {
-    width: 0.9375rem;
-    height: 0.9375rem;
+    transform: none !important;
+    box-shadow: none !important;
   }
 }
 

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/utils/supabase/client";
 import type {
   RawReward,
-  RawUserRedemptionWithReward,
+  // RawUserRedemptionWithReward,
   RedeemedRewardItem,
   RewardCategory,
   RewardData,

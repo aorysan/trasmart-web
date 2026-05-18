@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Gift, Recycle } from "lucide-react";
 import styles from "./NotificationBell.module.scss";
 import { createClient } from "@/lib/utils/supabase/client";
@@ -64,7 +64,7 @@ function notificationIcon(type: NotificationType) {
   return <Gift size={16} />;
 }
 
-export default function NotificationBell({
+const NotificationBell = memo(function NotificationBell({
   buttonClassName,
   badgeClassName,
 }: Props) {
@@ -357,4 +357,6 @@ export default function NotificationBell({
       )}
     </div>
   );
-}
+});
+
+export default NotificationBell;

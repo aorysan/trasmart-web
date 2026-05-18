@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState, useCallback, useRef } from "react";
+import { memo, FormEvent, useEffect, useState, useCallback, useRef } from "react";
 import { X, Recycle, Clock, RotateCcw, CheckCircle } from "lucide-react";
 import styles from "./PairMachineModal.module.scss";
 
@@ -13,9 +13,10 @@ function formatTime(seconds: number): string {
 interface PairMachineModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onPairSuccess?: () => void;
 }
 
-export default function PairMachineModal({ isOpen, onClose }: PairMachineModalProps) {
+const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPairSuccess }: PairMachineModalProps) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; machine_name?: string } | null>(null);
@@ -143,6 +144,7 @@ export default function PairMachineModal({ isOpen, onClose }: PairMachineModalPr
       if (data.success) {
         setCode("");
         setTimeout(() => fetchSessionStatus(), 500);
+        onPairSuccess?.();
       }
     } catch {
       setResult({ success: false, message: "Gagal terhubung ke server." });
@@ -263,4 +265,6 @@ export default function PairMachineModal({ isOpen, onClose }: PairMachineModalPr
       </div>
     </div>
   );
-}
+});
+
+export default PairMachineModal;

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/utils/supabase/client";
 import { useRouter } from "next/navigation";
 export function useRealtimeTransactions(
@@ -7,7 +7,7 @@ export function useRealtimeTransactions(
   onInsert?: () => void,
 ) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onInsertRef = useRef(onInsert);
   useEffect(() => {

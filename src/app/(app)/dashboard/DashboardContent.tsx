@@ -23,7 +23,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import styles from "./dashboard.module.scss";
-import type { HistoryEntry, HistoryIconVariant } from "@/types/dashboard";
+import type { HistoryEntry, HistoryIconVariant, RawTransaction } from "@/types/dashboard";
 import PairMachineModal from "@/components/layout/PairMachineModal";
 import DashboardNotificationBellWrapper from "@/components/layout/DashboardNotificationBellWrapper";
 
@@ -142,7 +142,7 @@ export default function DashboardContent({
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: RawTransaction | null }) => {
         if (!data) return;
         const today = getTodayString();
         const entry: HistoryEntry = {

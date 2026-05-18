@@ -2,6 +2,7 @@
 
 import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@/lib/utils/supabase/client";
+import { useRouter } from "next/navigation";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import Link from "next/link";
 import {

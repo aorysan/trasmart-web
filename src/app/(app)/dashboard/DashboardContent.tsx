@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/client";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 import Link from "next/link";
@@ -106,6 +107,7 @@ export default function DashboardContent({
   allTransactionsByDate,
   searchParamsDate,
 }: DashboardContentProps) {
+  const router = useRouter();
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<{
     session_code: string;
@@ -210,6 +212,17 @@ export default function DashboardContent({
       setActiveSession(null);
     }
   }, []);
+
+  // Refresh data when tab regains focus (WebSocket may have been throttled)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [router]);
 
   // Fetch session once on mount + start local countdown (no HTTP)
   const prevActiveRef = useRef(activeSession);

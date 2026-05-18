@@ -23,7 +23,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import styles from "./dashboard.module.scss";
-import type { HistoryEntry, HistoryIconVariant } from "@/types/dashboard";
+import type { HistoryEntry, HistoryIconVariant, RawTransaction } from "@/types/dashboard";
 import PairMachineModal from "@/components/layout/PairMachineModal";
 import DashboardNotificationBellWrapper from "@/components/layout/DashboardNotificationBellWrapper";
 
@@ -106,6 +106,7 @@ const DashboardContent = memo(function DashboardContent({
   allTransactionsByDate,
   searchParamsDate,
 }: DashboardContentProps) {
+  const router = useRouter();
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<{
     session_code: string;
@@ -217,6 +218,17 @@ const DashboardContent = memo(function DashboardContent({
       setActiveSession(null);
     }
   }, []);
+
+  // Refresh data when tab regains focus (WebSocket may have been throttled)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [router]);
 
   // Fetch session once on mount + start local countdown (no HTTP)
   const prevActiveRef = useRef(activeSession);

@@ -13,6 +13,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: "/icon.png",
+  },
   title: "TrasMart - Ubah Sampah Jadi Poin",
   description: "Tukar botol plastik dan kaleng dengan poin untuk voucher kantin Polinema",
 };

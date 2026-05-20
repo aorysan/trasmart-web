@@ -41,8 +41,16 @@ interface ActivityChangedDetail {
   createdAt: string;
 }
 
+function ensureUTC(isoString: string): string {
+  const trimmed = isoString.trim();
+  if (!/[Zz]$/.test(trimmed) && !/[+-]\d{2}:\d{2}$/.test(trimmed)) {
+    return trimmed + "Z";
+  }
+  return trimmed;
+}
+
 function getRelativeTime(isoString: string): string {
-  const created = new Date(isoString).getTime();
+  const created = new Date(ensureUTC(isoString)).getTime();
   const now = Date.now();
   const diffMinutes = Math.max(Math.floor((now - created) / 60000), 0);
 
@@ -88,7 +96,7 @@ const NotificationBell = memo(function NotificationBell({
 
   const toTime = (value: string | null): number => {
     if (!value) return 0;
-    const parsed = new Date(value).getTime();
+    const parsed = new Date(ensureUTC(value)).getTime();
     return Number.isNaN(parsed) ? 0 : parsed;
   };
 

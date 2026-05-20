@@ -126,7 +126,7 @@ void loop() {
     unsigned long startTime = millis();
     bool logamDitemukan = false;
 
-    while (millis() - startTime < 20000) { 
+    while (millis() - startTime < 5000) { 
       int sisaWaktu = 5 - ((millis() - startTime) / 1000);
       
       lcd.setCursor(0, 1);
@@ -217,7 +217,7 @@ void checkPairingStatus() {
       lcd.setCursor(0, 0);
       lcd.print("Selamat Datang!");
       lcd.setCursor(0, 1);
-      lcd.print("Silahkan Masukkan Botol");
+      lcd.print("Masukkan Botol");
       delay(2000);
     }
   }

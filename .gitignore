@@ -15,7 +15,7 @@
 SUPABASE_BEST_PRACTICES.md
 SUPABASE_QUICK_REFERENCE.md
 SUPABASE_SETUP_GUIDE.md
-IOT/include/secret.h
+IOT/include/secrets.h
 
 # next.js
 /.next/

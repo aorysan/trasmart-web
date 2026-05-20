@@ -325,43 +325,50 @@ const NotificationBell = memo(function NotificationBell({
       </button>
 
       {isOpen && (
-        <div
-          className={styles.panel}
-          role="dialog"
-          aria-label="Daftar notifikasi"
-        >
-          <div className={styles.header}>
-            <p className={styles.title}>Notifikasi</p>
-            <p className={styles.helper}>{notifications.length} terbaru</p>
+        <>
+          {/* Mobile backdrop overlay */}
+          <div
+            className={styles.mobileOverlay}
+            onClick={() => setIsOpen(false)}
+          />
+          <div
+            className={styles.panel}
+            role="dialog"
+            aria-label="Daftar notifikasi"
+          >
+            <div className={styles.header}>
+              <p className={styles.title}>Notifikasi</p>
+              <p className={styles.helper}>{notifications.length} terbaru</p>
+            </div>
+
+            {loading && <p className={styles.loading}>Memuat notifikasi...</p>}
+
+            {!loading && error && <p className={styles.error}>{error}</p>}
+
+            {!loading && !error && notifications.length === 0 && (
+              <p className={styles.empty}>Belum ada notifikasi.</p>
+            )}
+
+            {!loading && !error && notifications.length > 0 && (
+              <ul className={styles.list}>
+                {notifications.map((item) => (
+                  <li key={item.id} className={styles.item}>
+                    <div className={styles.iconWrap}>
+                      {notificationIcon(item.type)}
+                    </div>
+                    <div className={styles.content}>
+                      <p className={styles.itemTitle}>{item.title}</p>
+                      <p className={styles.itemMessage}>{item.message}</p>
+                      <p className={styles.itemTime}>
+                        {getRelativeTime(item.createdAt)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
-          {loading && <p className={styles.loading}>Memuat notifikasi...</p>}
-
-          {!loading && error && <p className={styles.error}>{error}</p>}
-
-          {!loading && !error && notifications.length === 0 && (
-            <p className={styles.empty}>Belum ada notifikasi.</p>
-          )}
-
-          {!loading && !error && notifications.length > 0 && (
-            <ul className={styles.list}>
-              {notifications.map((item) => (
-                <li key={item.id} className={styles.item}>
-                  <div className={styles.iconWrap}>
-                    {notificationIcon(item.type)}
-                  </div>
-                  <div className={styles.content}>
-                    <p className={styles.itemTitle}>{item.title}</p>
-                    <p className={styles.itemMessage}>{item.message}</p>
-                    <p className={styles.itemTime}>
-                      {getRelativeTime(item.createdAt)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </>
       )}
     </div>
   );

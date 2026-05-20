@@ -2,10 +2,10 @@
 .mobileToggle {
   display: none;
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 50;
-  background: #166534;
+  top: 0.75rem;
+  left: 1rem;
+  z-index: 45;
+  background: linear-gradient(135deg, #166534, #15803d);
   border: none;
   color: white;
   border-radius: 0.75rem;

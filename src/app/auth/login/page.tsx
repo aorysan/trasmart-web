@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +34,6 @@ export default function LoginPage() {
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
   const router = useRouter();
-  const supabase = createClient();
 
   // ── Login ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +48,7 @@ export default function LoginPage() {
     }
 
     try {
+      const supabase = createClient(rememberMe);
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -71,6 +72,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
+      const supabase = createClient(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
@@ -89,6 +91,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
+      const supabase = createClient(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -116,6 +119,7 @@ export default function LoginPage() {
 
     setForgotLoading(true);
     try {
+      const supabase = createClient(true);
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         forgotEmail,
         {
@@ -313,7 +317,12 @@ export default function LoginPage() {
             </div>
             <div className={styles.loginCard_form_options}>
               <label className={styles.rememberMe}>
-                <input type="checkbox" disabled={loading} />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={loading}
+                />
                 Remember me
               </label>
               {/* Forgot Password trigger */}

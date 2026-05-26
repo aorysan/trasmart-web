@@ -44,3 +44,7 @@ env.local
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# markdown
+claude.md
+AGENTS.md

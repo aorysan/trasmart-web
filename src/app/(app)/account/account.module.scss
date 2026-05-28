@@ -688,6 +688,12 @@
   margin-top: 0.2rem;
 }
 
+.fieldError {
+  color: #dc2626;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
 .errorMessage {
   background-color: rgba(239, 68, 68, 0.08);
   color: var(--color-error);

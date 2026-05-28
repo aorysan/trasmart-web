@@ -103,6 +103,13 @@
 }
 
 /* Error & Success States */
+.fieldError {
+  color: #dc2626;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
 .errorBox {
   background: #fee2e2;
   color: #dc2626;

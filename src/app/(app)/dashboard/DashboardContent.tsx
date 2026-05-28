@@ -25,8 +25,13 @@ import {
 } from "lucide-react";
 import styles from "./dashboard.module.scss";
 import type { HistoryEntry, HistoryIconVariant, RawTransaction } from "@/types/dashboard";
+import dynamic from "next/dynamic";
 import PairMachineModal from "@/components/layout/PairMachineModal";
-import DashboardNotificationBellWrapper from "@/components/layout/DashboardNotificationBellWrapper";
+
+const NotificationBell = dynamic(
+  () => import("@/components/layout/NotificationBell"),
+  { ssr: false, loading: () => <div style={{ width: 44, height: 44 }} /> },
+);
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -96,7 +101,6 @@ interface DashboardContentProps {
     dateRange: string;
   };
   allTransactionsByDate: Record<string, HistoryEntry[]>;
-  searchParamsDate?: string;
 }
 
 const DashboardContent = memo(function DashboardContent({
@@ -105,7 +109,6 @@ const DashboardContent = memo(function DashboardContent({
   cta,
   chart,
   allTransactionsByDate,
-  searchParamsDate,
 }: DashboardContentProps) {
   const router = useRouter();
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
@@ -302,11 +305,7 @@ const DashboardContent = memo(function DashboardContent({
   const fallbackDate = hasChartData
     ? (chart.data.at(-1)?.date ?? getTodayString())
     : getTodayString();
-  const requestedDate = searchParamsDate;
-  const selectedDate =
-    requestedDate && allTransactionsByDate[requestedDate]
-      ? requestedDate
-      : fallbackDate;
+  const [selectedDate, setSelectedDate] = useState(fallbackDate);
 
   const pointsToGo = localWallet.redemptionThreshold - localWallet.totalPoints;
   const isToday = selectedDate === getTodayString();
@@ -494,11 +493,12 @@ const DashboardContent = memo(function DashboardContent({
                         timeZone: "Asia/Jakarta",
                       });
                       return (
-                        <Link
+                        <button
                           key={point.date}
-                          href={`/dashboard?date=${point.date}`}
+                          onClick={() => setSelectedDate(point.date)}
                           className={`${styles.barItem} ${isActive ? styles.barItemActive : ""}`}
                           title={`${formatDisplayDate(point.date)}: ${point.rawValue} Pts`}
+                          type="button"
                         >
                           <div className={styles.barWrapper}>
                             <div
@@ -519,7 +519,7 @@ const DashboardContent = memo(function DashboardContent({
                           >
                             {dayLabel}
                           </span>
-                        </Link>
+                        </button>
                       );
                     })}
                   </div>
@@ -711,7 +711,7 @@ function DashboardTopbar() {
         </p>
       </div>
       <div className={styles.headerRight}>
-        <DashboardNotificationBellWrapper
+        <NotificationBell
           buttonClassName={styles.notifBtn}
           badgeClassName={styles.notifBadge}
         />

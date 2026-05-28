@@ -1,23 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/client";
 import styles from "./reset-password.module.scss";
 import { Eye, EyeOff, Lock, Recycle } from "lucide-react";
 
+const resetSchema = z
+  .object({
+    password: z.string().min(8, "Password minimal 8 karakter"),
+    confirmPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password tidak cocok",
+    path: ["confirmPassword"],
+  });
+
+type ResetForm = z.infer<typeof resetSchema>;
+
 export default function ResetPasswordPage() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetForm>({
+    resolver: zodResolver(resetSchema),
+  });
 
   // Verifikasi session valid (dari link reset email)
   useEffect(() => {
@@ -27,7 +47,6 @@ export default function ResetPasswordPage() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        // Tidak ada session — link sudah expired atau tidak valid
         router.replace("/auth/login?error=Link+reset+tidak+valid+atau+sudah+kedaluwarsa");
         return;
       }
@@ -37,37 +56,21 @@ export default function ResetPasswordPage() {
     void checkSession();
   }, [router, supabase]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const onSubmit = async (data: ResetForm) => {
+    setServerError(null);
 
-    if (password.length < 8) {
-      setError("Password minimal 8 karakter");
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: data.password,
+    });
+
+    if (updateError) {
+      setServerError(updateError.message);
       return;
     }
-    if (password !== confirmPassword) {
-      setError("Konfirmasi password tidak cocok");
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-
-      if (updateError) {
-        setError(updateError.message);
-        return;
-      }
-
-      setSuccess(true);
-      // Sign out supaya user login fresh dengan password baru
-      await supabase.auth.signOut();
-      setTimeout(() => router.push("/auth/login"), 3000);
-    } catch {
-      setError("Terjadi kesalahan. Coba lagi.");
-    } finally {
-      setLoading(false);
-    }
+    setSuccess(true);
+    await supabase.auth.signOut();
+    setTimeout(() => router.push("/auth/login"), 3000);
   };
 
   if (checking) {
@@ -108,13 +111,13 @@ export default function ResetPasswordPage() {
 
         {!success && (
           <>
-            {error && (
+            {serverError && (
               <div className={styles.errorBox} role="alert">
-                ⚠️ {error}
+                ⚠️ {serverError}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className={styles.form}>
+            <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
               {/* Password Baru */}
               <div className={styles.formGroup}>
                 <label htmlFor="new-password" className={styles.label}>
@@ -128,10 +131,8 @@ export default function ResetPasswordPage() {
                     id="new-password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Minimal 8 karakter"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    required
+                    {...register("password")}
+                    disabled={isSubmitting}
                     autoFocus
                     autoComplete="new-password"
                   />
@@ -143,7 +144,9 @@ export default function ResetPasswordPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <small className={styles.hint}>Minimal 8 karakter</small>
+                {errors.password && (
+                  <span className={styles.fieldError}>{errors.password.message}</span>
+                )}
               </div>
 
               {/* Konfirmasi Password */}
@@ -159,10 +162,8 @@ export default function ResetPasswordPage() {
                     id="confirm-password"
                     type={showConfirm ? "text" : "password"}
                     placeholder="Ulangi password baru"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={loading}
-                    required
+                    {...register("confirmPassword")}
+                    disabled={isSubmitting}
                     autoComplete="new-password"
                   />
                   <button
@@ -173,14 +174,17 @@ export default function ResetPasswordPage() {
                     {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {errors.confirmPassword && (
+                  <span className={styles.fieldError}>{errors.confirmPassword.message}</span>
+                )}
               </div>
 
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={loading}
+                disabled={isSubmitting}
               >
-                {loading ? "Menyimpan..." : "Simpan Password Baru"}
+                {isSubmitting ? "Menyimpan..." : "Simpan Password Baru"}
               </button>
             </form>
 

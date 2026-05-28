@@ -2,6 +2,9 @@
 
 import styles from "./login.module.scss";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/client";
 import Link from "next/link";
@@ -16,16 +19,18 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-type PageMode = "login" | "forgot";
+const loginSchema = z.object({
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(1, "Password wajib diisi"),
+  rememberMe: z.boolean(),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<PageMode>("login");
+  const [mode, setMode] = useState<"login" | "forgot">("login");
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState("");
@@ -35,42 +40,36 @@ export default function LoginPage() {
 
   const router = useRouter();
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { rememberMe: true },
+  });
+
   // ── Login ────────────────────────────────────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const onSubmit = async (data: LoginForm) => {
+    setServerError(null);
 
-    if (!email || !password) {
-      setError("Email and password are required");
-      setLoading(false);
-      return;
-    }
+    const supabase = createClient(data.rememberMe);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
 
-    try {
-      const supabase = createClient(rememberMe);
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message);
-      } else {
-        router.replace("/dashboard");
-        router.refresh();
-      }
-    } catch {
-      setError("An unexpected error occurred.");
-    } finally {
-      setLoading(false);
+    if (signInError) {
+      setServerError(signInError.message);
+    } else {
+      router.replace("/dashboard");
+      router.refresh();
     }
   };
 
   // ── OAuth ────────────────────────────────────────────────────────────────
   const handleGitHubLogin = async () => {
-    setLoading(true);
-    setError(null);
+    setServerError(null);
     try {
       const supabase = createClient(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -79,17 +78,14 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
-      if (error) setError(error.message);
+      if (error) setServerError(error.message);
     } catch {
-      setError("Failed to login with GitHub");
-    } finally {
-      setLoading(false);
+      setServerError("Failed to login with GitHub");
     }
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
+    setServerError(null);
     try {
       const supabase = createClient(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -98,11 +94,9 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
-      if (error) setError(error.message);
+      if (error) setServerError(error.message);
     } catch {
-      setError("Failed to login with Google");
-    } finally {
-      setLoading(false);
+      setServerError("Failed to login with Google");
     }
   };
 
@@ -206,7 +200,7 @@ export default function LoginPage() {
                   className={styles.loginCard_form_submitBtn}
                   disabled={forgotLoading}
                 >
-                  {forgotLoading ? "Mengirim..." : "  Kirim Link"}
+                  {forgotLoading ? "Mengirim..." : "Kirim Link"}
                 </button>
               </form>
 
@@ -236,10 +230,10 @@ export default function LoginPage() {
           <h1>Welcome Back</h1>
           <p>please enter your credentials to sign in.</p>
 
-          {error && (
+          {serverError && (
             <div className={styles.errorBox}>
               <AlertCircle size={16} />
-              <span>{error}</span>
+              <span>{serverError}</span>
             </div>
           )}
 
@@ -250,7 +244,6 @@ export default function LoginPage() {
                   type="button"
                   className={styles.loginCard_socials_button}
                   onClick={handleGoogleLogin}
-                  disabled={loading}
                   title="Sign in with Google"
                 >
                   <Image width="32" height="32" src="https://img.icons8.com/papercut/60/google-logo.png" alt="google-logo" unoptimized />
@@ -262,7 +255,6 @@ export default function LoginPage() {
                   type="button"
                   className={styles.loginCard_socials_button}
                   onClick={handleGitHubLogin}
-                  disabled={loading}
                   title="Sign in with GitHub"
                 >
                   <Image width="32" height="32" src="https://img.icons8.com/glyph-neue/64/github.png" alt="github" unoptimized />
@@ -277,19 +269,20 @@ export default function LoginPage() {
         </div>
 
         <div className={styles.loginCard_form}>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className={styles.loginCard_form_group}>
               <div className={styles.inputWithIcon}>
                 <Mail size={18} className={styles.inputIcon} />
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  required
+                  {...register("email")}
+                  disabled={isSubmitting}
                 />
               </div>
+              {errors.email && (
+                <span className={styles.fieldError}>{errors.email.message}</span>
+              )}
             </div>
             <div className={styles.loginCard_form_group}>
               <div className={styles.passwordWrapper}>
@@ -298,30 +291,30 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    required
+                    {...register("password")}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <button
                   type="button"
                   className={styles.passwordToggle}
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
+                  disabled={isSubmitting}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && (
+                <span className={styles.fieldError}>{errors.password.message}</span>
+              )}
             </div>
             <div className={styles.loginCard_form_options}>
               <label className={styles.rememberMe}>
                 <input
                   type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loading}
+                  {...register("rememberMe")}
+                  disabled={isSubmitting}
                 />
                 Remember me
               </label>
@@ -330,10 +323,10 @@ export default function LoginPage() {
                 type="button"
                 className={styles.forgotBtn}
                 onClick={() => {
-                  setForgotEmail(email);
+                  setForgotEmail("");
                   setMode("forgot");
                 }}
-                disabled={loading}
+                disabled={isSubmitting}
               >
                 Forgot password?
               </button>
@@ -341,9 +334,9 @@ export default function LoginPage() {
             <button
               type="submit"
               className={styles.loginCard_form_submitBtn}
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
         </div>

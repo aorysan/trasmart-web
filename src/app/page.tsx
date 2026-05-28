@@ -23,6 +23,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import Image from "next/image";
 
 const stats = [
   { icon: Recycle, value: 12500, suffix: "+", label: "Botol Didaur Ulang" },
@@ -242,7 +243,7 @@ export default function LandingPage() {
         <div className={styles.navInner}>
           <Link href="/" className={styles.navBrand}>
             <div className={styles.navLogo}>
-              <Recycle size={28} strokeWidth={2.5} />
+              <Image src="/icon.png" alt="logo-sign" width={40} height={40} />
             </div>
             <span>TrasMart</span>
           </Link>
@@ -350,11 +351,11 @@ export default function LandingPage() {
                 <div className={styles.heroMachineBody}>
                   <div className={styles.heroMachineScreen}>
                     <div className={styles.heroMachineScreenContent}>
-                      <Recycle size={48} className={styles.heroMachineIcon} />
+                      <Image src="/icon.png" alt="logo-sign" width={40} height={40} />
                       <span>TrasMart</span>
                       <div className={styles.heroMachinePoints}>
                         <Zap size={16} />
-                        <span>+50 Poin</span>
+                        <span>+15 Poin</span>
                       </div>
                     </div>
                   </div>

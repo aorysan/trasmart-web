@@ -9,11 +9,7 @@ import DashboardContent from "./DashboardContent";
 
 export const revalidate = 0;
 
-export default async function DashboardRoute({
-  searchParams,
-}: {
-  searchParams?: Promise<{ date?: string }>;
-}) {
+export default async function DashboardRoute() {
   await connection();
 
   const cookieStore = await cookies();
@@ -40,8 +36,6 @@ export default async function DashboardRoute({
     );
   }
 
-  const params = await searchParams;
-
   return (
     <DashboardContent
       userId={user.id}
@@ -49,7 +43,6 @@ export default async function DashboardRoute({
       cta={data.cta}
       chart={data.chart}
       allTransactionsByDate={data.allTransactionsByDate}
-      searchParamsDate={params?.date}
     />
   );
 }

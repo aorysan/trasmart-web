@@ -3,6 +3,9 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   User,
   Mail,
@@ -22,14 +25,40 @@ import type { UserProfile } from "@/hooks/useAuth";
 import { createClient } from "@/lib/utils/supabase/client";
 import PageTopbar from "@/components/layout/PageTopbar";
 
+const profileSchema = z.object({
+  username: z.string().optional(),
+  fullName: z.string().min(1, "Nama lengkap wajib diisi"),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postal_code: z.string().optional(),
+});
+
+type ProfileForm = z.infer<typeof profileSchema>;
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Password saat ini wajib diisi"),
+    newPassword: z.string().min(8, "Password baru minimal 8 karakter"),
+    confirmPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Password baru tidak cocok",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "Password baru harus berbeda dari password lama",
+    path: ["newPassword"],
+  });
+
+type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
+
 export default function AccountRoute() {
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const { user, loading, error, updateUser, signOut, changePassword } =
     useUser();
   const [pointBalance, setPointBalance] = useState(0);
   const [pointError, setPointError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<UserProfile>>({});
   const [toast, setToast] = useState<{
     type: "success" | "error";
     message: string;
@@ -39,31 +68,27 @@ export default function AccountRoute() {
 
   // State modal Change Password
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordServerError, setPasswordServerError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        username: user.username || "",
-        fullName: user.fullName || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        avatar: user.avatar || "",
-        city: user.city || "",
-        postal_code: user.postal_code || "",
-      });
-    }
-  }, [user]);
+  const profileForm = useForm<ProfileForm>({
+    resolver: zodResolver(profileSchema),
+    values: {
+      username: user?.username ?? "",
+      fullName: user?.fullName ?? "",
+      phone: user?.phone ?? "",
+      address: user?.address ?? "",
+      city: user?.city ?? "",
+      postal_code: user?.postal_code ?? "",
+    },
+  });
+
+  const passwordForm = useForm<ChangePasswordForm>({
+    resolver: zodResolver(changePasswordSchema),
+  });
 
   const loadPoints = useCallback(async (signal?: AbortSignal) => {
     const uid = userIdRef.current;
@@ -121,23 +146,19 @@ export default function AccountRoute() {
 
   const handleCancel = () => {
     setIsEditing(false);
-    if (user) {
-      setFormData({
-        username: user.username || "",
-        fullName: user.fullName || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        avatar: user.avatar || "",
-        city: user.city || "",
-        postal_code: user.postal_code || "",
-      });
-    }
+    profileForm.reset({
+      username: user?.username ?? "",
+      fullName: user?.fullName ?? "",
+      phone: user?.phone ?? "",
+      address: user?.address ?? "",
+      city: user?.city ?? "",
+      postal_code: user?.postal_code ?? "",
+    });
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
+  const onProfileSubmit = async (data: ProfileForm) => {
     try {
-      await updateUser(formData);
+      await updateUser(data as Partial<UserProfile>);
       setIsEditing(false);
       setToast({ type: "success", message: "Profile updated successfully!" });
       setTimeout(() => setToast(null), 4000);
@@ -147,26 +168,13 @@ export default function AccountRoute() {
         err instanceof Error ? err.message : "Failed to update profile";
       setToast({ type: "error", message: `Error: ${errorMsg}` });
       setTimeout(() => setToast(null), 5000);
-    } finally {
-      setIsSaving(false);
     }
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handlers modal Change Password
   const handleOpenPasswordModal = () => {
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setPasswordError(null);
+    passwordForm.reset();
+    setPasswordServerError(null);
     setPasswordSuccess(null);
     setShowCurrentPw(false);
     setShowNewPw(false);
@@ -175,62 +183,28 @@ export default function AccountRoute() {
   };
 
   const handleClosePasswordModal = () => {
-    if (isChangingPassword) return;
+    if (passwordForm.formState.isSubmitting) return;
     setIsPasswordModalOpen(false);
-    setPasswordError(null);
+    setPasswordServerError(null);
     setPasswordSuccess(null);
   };
 
-  const handlePasswordInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const { name, value } = e.target;
-    setPasswordForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePasswordChange = async () => {
-    setPasswordError(null);
+  const onPasswordSubmit = async (data: ChangePasswordForm) => {
+    setPasswordServerError(null);
     setPasswordSuccess(null);
 
-    if (!passwordForm.currentPassword) {
-      setPasswordError("Password saat ini tidak boleh kosong");
-      return;
-    }
-    if (passwordForm.newPassword.length < 8) {
-      setPasswordError("Password baru minimal 8 karakter");
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("Konfirmasi password tidak cocok");
-      return;
-    }
-    if (passwordForm.currentPassword === passwordForm.newPassword) {
-      setPasswordError("Password baru harus berbeda dari password lama");
-      return;
-    }
-
-    setIsChangingPassword(true);
     try {
-      await changePassword(
-        passwordForm.currentPassword,
-        passwordForm.newPassword,
-      );
+      await changePassword(data.currentPassword, data.newPassword);
       setPasswordSuccess("✓ Password berhasil diubah!");
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      passwordForm.reset();
       setTimeout(() => {
         setIsPasswordModalOpen(false);
         setPasswordSuccess(null);
       }, 2000);
     } catch (err) {
-      setPasswordError(
+      setPasswordServerError(
         err instanceof Error ? err.message : "Gagal mengubah password",
       );
-    } finally {
-      setIsChangingPassword(false);
     }
   };
 
@@ -391,19 +365,17 @@ export default function AccountRoute() {
                 </button>
               </>
             ) : (
-              <>
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
                 <div className={styles.formGroup}>
                   <label htmlFor="username" className={styles.label}>
                     User Name
                   </label>
                   <input
                     id="username"
-                    name="username"
                     type="text"
                     className={styles.input}
-                    value={formData.username || ""}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                    {...profileForm.register("username")}
+                    disabled={profileForm.formState.isSubmitting}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -412,13 +384,16 @@ export default function AccountRoute() {
                   </label>
                   <input
                     id="fullName"
-                    name="fullName"
                     type="text"
                     className={styles.input}
-                    value={formData.fullName || ""}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                    {...profileForm.register("fullName")}
+                    disabled={profileForm.formState.isSubmitting}
                   />
+                  {profileForm.formState.errors.fullName && (
+                    <span className={styles.fieldError}>
+                      {profileForm.formState.errors.fullName.message}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="email" className={styles.label}>
@@ -442,12 +417,10 @@ export default function AccountRoute() {
                   </label>
                   <input
                     id="phone"
-                    name="phone"
                     type="tel"
                     className={styles.input}
-                    value={formData.phone || ""}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                    {...profileForm.register("phone")}
+                    disabled={profileForm.formState.isSubmitting}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -456,12 +429,10 @@ export default function AccountRoute() {
                   </label>
                   <input
                     id="address"
-                    name="address"
                     type="text"
                     className={styles.input}
-                    value={formData.address || ""}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                    {...profileForm.register("address")}
+                    disabled={profileForm.formState.isSubmitting}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -470,12 +441,10 @@ export default function AccountRoute() {
                   </label>
                   <input
                     id="city"
-                    name="city"
                     type="text"
                     className={styles.input}
-                    value={formData.city || ""}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                    {...profileForm.register("city")}
+                    disabled={profileForm.formState.isSubmitting}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -484,33 +453,32 @@ export default function AccountRoute() {
                   </label>
                   <input
                     id="postal_code"
-                    name="postal_code"
                     type="text"
                     className={styles.input}
-                    value={formData.postal_code || ""}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                    {...profileForm.register("postal_code")}
+                    disabled={profileForm.formState.isSubmitting}
                   />
                 </div>
                 <div className={styles.formActions}>
                   <button
+                    type="submit"
                     className={styles.saveBtn}
-                    onClick={handleSave}
-                    disabled={isSaving}
+                    disabled={profileForm.formState.isSubmitting}
                   >
                     <Check size={18} />
-                    {isSaving ? "Saving..." : "Simpan Perubahan"}
+                    {profileForm.formState.isSubmitting ? "Saving..." : "Simpan Perubahan"}
                   </button>
                   <button
+                    type="button"
                     className={styles.cancelBtn}
                     onClick={handleCancel}
-                    disabled={isSaving}
+                    disabled={profileForm.formState.isSubmitting}
                   >
                     <X size={18} />
                     Batal
                   </button>
                 </div>
-              </>
+              </form>
             )}
           </div>
         </div>
@@ -565,18 +533,13 @@ export default function AccountRoute() {
                 className={styles.modalCloseBtn}
                 onClick={handleClosePasswordModal}
                 aria-label="Tutup modal"
-                disabled={isChangingPassword}
+                disabled={passwordForm.formState.isSubmitting}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handlePasswordChange();
-              }}
-            >
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
               {/* Password Saat Ini */}
               <div className={styles.formGroup}>
                 <label htmlFor="currentPassword" className={styles.label}>
@@ -588,12 +551,10 @@ export default function AccountRoute() {
                   </span>
                   <input
                     id="currentPassword"
-                    name="currentPassword"
                     type={showCurrentPw ? "text" : "password"}
                     className={`${styles.input} ${styles.inputPasswordField}`}
-                    value={passwordForm.currentPassword}
-                    onChange={handlePasswordInputChange}
-                    disabled={isChangingPassword}
+                    {...passwordForm.register("currentPassword")}
+                    disabled={passwordForm.formState.isSubmitting}
                     placeholder="Masukkan password saat ini"
                     autoComplete="current-password"
                   />
@@ -605,6 +566,11 @@ export default function AccountRoute() {
                     {showCurrentPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {passwordForm.formState.errors.currentPassword && (
+                  <span className={styles.fieldError}>
+                    {passwordForm.formState.errors.currentPassword.message}
+                  </span>
+                )}
               </div>
 
               {/* Password Baru */}
@@ -618,12 +584,10 @@ export default function AccountRoute() {
                   </span>
                   <input
                     id="newPassword"
-                    name="newPassword"
                     type={showNewPw ? "text" : "password"}
                     className={`${styles.input} ${styles.inputPasswordField}`}
-                    value={passwordForm.newPassword}
-                    onChange={handlePasswordInputChange}
-                    disabled={isChangingPassword}
+                    {...passwordForm.register("newPassword")}
+                    disabled={passwordForm.formState.isSubmitting}
                     placeholder="Minimal 8 karakter"
                     autoComplete="new-password"
                   />
@@ -635,7 +599,11 @@ export default function AccountRoute() {
                     {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <small className={styles.inputHint}>Minimal 8 karakter</small>
+                {passwordForm.formState.errors.newPassword && (
+                  <span className={styles.fieldError}>
+                    {passwordForm.formState.errors.newPassword.message}
+                  </span>
+                )}
               </div>
 
               {/* Konfirmasi Password */}
@@ -649,12 +617,10 @@ export default function AccountRoute() {
                   </span>
                   <input
                     id="confirmPassword"
-                    name="confirmPassword"
                     type={showConfirmPw ? "text" : "password"}
                     className={`${styles.input} ${styles.inputPasswordField}`}
-                    value={passwordForm.confirmPassword}
-                    onChange={handlePasswordInputChange}
-                    disabled={isChangingPassword}
+                    {...passwordForm.register("confirmPassword")}
+                    disabled={passwordForm.formState.isSubmitting}
                     placeholder="Ulangi password baru"
                     autoComplete="new-password"
                   />
@@ -666,11 +632,16 @@ export default function AccountRoute() {
                     {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {passwordForm.formState.errors.confirmPassword && (
+                  <span className={styles.fieldError}>
+                    {passwordForm.formState.errors.confirmPassword.message}
+                  </span>
+                )}
               </div>
 
-              {passwordError && (
+              {passwordServerError && (
                 <div className={styles.errorMessage} role="alert">
-                  {passwordError}
+                  {passwordServerError}
                 </div>
               )}
               {passwordSuccess && (
@@ -683,16 +654,16 @@ export default function AccountRoute() {
                 <button
                   type="submit"
                   className={styles.saveBtn}
-                  disabled={isChangingPassword}
+                  disabled={passwordForm.formState.isSubmitting}
                 >
                   <Check size={18} />
-                  {isChangingPassword ? "Menyimpan..." : "Simpan Password"}
+                  {passwordForm.formState.isSubmitting ? "Menyimpan..." : "Simpan Password"}
                 </button>
                 <button
                   type="button"
                   className={styles.cancelBtn}
                   onClick={handleClosePasswordModal}
-                  disabled={isChangingPassword}
+                  disabled={passwordForm.formState.isSubmitting}
                 >
                   <X size={18} />
                   Batal

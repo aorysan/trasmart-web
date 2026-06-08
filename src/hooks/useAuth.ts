@@ -2,7 +2,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/client";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
@@ -24,8 +23,6 @@ export function useAuth() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
   const supabase = useMemo(() => createClient(), []);
 
   const userRef = useRef<User | null>(null);
@@ -183,11 +180,11 @@ export function useAuth() {
       if (err) throw err;
       setUser(null);
       setUserProfile(null);
-      router.push("/auth/login");
+      window.location.href = "/";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign out error");
     }
-  }, [supabase, router]);
+  }, [supabase]);
 
   const updateProfile = useCallback(
     async (updates: Partial<UserProfile>): Promise<void> => {

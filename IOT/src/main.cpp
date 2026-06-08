@@ -23,12 +23,11 @@ int distance;
 String currentSessionCode = "";
 bool isPaired = false;
 unsigned long lastPairCheck = 0;
-unsigned long lastSessionRefresh = 0;
 const unsigned long PAIR_CHECK_INTERVAL = 5000;
-const unsigned long SESSION_REFRESH_INTERVAL = 30000;
 
 void getSessionCode();
 void checkPairingStatus();
+void fetchSessionCode();
 void kirimKeSupabase(String jenis, int poin);
 void refreshSessionExpiry();
 
@@ -89,15 +88,20 @@ void loop() {
     bool wasPaired = isPaired;
     checkPairingStatus();
     if (wasPaired && !isPaired) {
-      getSessionCode();
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Sesi Berakhir");
+      delay(2000);
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Kode: ");
+      lcd.print(currentSessionCode);
+      lcd.setCursor(0, 1);
+      lcd.print("Scan di web   ");
     }
   }
 
   if (!isPaired) {
-    if (now - lastSessionRefresh > SESSION_REFRESH_INTERVAL) {
-      lastSessionRefresh = now;
-      getSessionCode();
-    }
     lcd.setCursor(0, 0);
     lcd.print("Kode: ");
     lcd.print(currentSessionCode);
@@ -195,6 +199,30 @@ void getSessionCode() {
   http.end();
 }
 
+void fetchSessionCode() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  String url = String(supabase_url)
+    + "/rest/v1/machine_sessions?machine_id=eq." + String(MACHINE_ID)
+    + "&status=eq.waiting&order=created_at.desc&limit=1&select=session_code";
+  http.begin(url);
+  http.addHeader("apikey", supabase_key);
+
+  int code = http.GET();
+  if (code == 200) {
+    String resp = http.getString();
+    int start = resp.indexOf("\"session_code\":\"") + 16;
+    int end = resp.indexOf("\"", start);
+    if (start > 16 && end > start) {
+      currentSessionCode = resp.substring(start, end);
+      Serial.print("Session code: ");
+      Serial.println(currentSessionCode);
+    }
+  }
+  http.end();
+}
+
 void checkPairingStatus() {
   if (WiFi.status() != WL_CONNECTED) return;
 
@@ -209,6 +237,9 @@ void checkPairingStatus() {
   if (code == 200) {
     String resp = http.getString();
     if (resp.indexOf("\"current_user_id\":null") != -1) {
+      if (isPaired) {
+        fetchSessionCode();
+      }
       isPaired = false;
     } else if (resp.indexOf("\"current_user_id\":\"") != -1) {
       isPaired = true;

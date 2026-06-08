@@ -1,8 +1,8 @@
 #ifndef SECRETS_H
 #define SECRETS_H
 
-const char* ssid          = "LEPASSANTAI";
-const char* password      = "mejameja";
+const char* ssid          = "KOST DUYUNG";
+const char* password      = "1sampai8";
 const char* supabase_url  = "https://zvutdbjkfqstmlpxvqzh.supabase.co";
 const char* supabase_key  = "sb_publishable_kDHEK_JKfp2kg52VSJ4YBQ_iDaOXiow";
 const char* MACHINE_ID    = "b0000001-0000-0000-0000-000000000002";

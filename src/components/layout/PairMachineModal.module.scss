@@ -158,6 +158,32 @@
   }
 }
 
+.endSessionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid var(--color-error, #ef4444);
+  border-radius: var(--radius-md);
+  color: var(--color-error, #ef4444);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: var(--color-error, #ef4444);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
 .spinning {
   animation: spin 1s linear infinite;
 }

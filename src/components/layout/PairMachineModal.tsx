@@ -1,13 +1,23 @@
 "use client";
 
 import { memo, FormEvent, useEffect, useState, useCallback, useRef } from "react";
-import { X, Recycle, Clock, RotateCcw, CheckCircle } from "lucide-react";
+import { X, Recycle, Clock, RotateCcw, CheckCircle, Power } from "lucide-react";
+import { createClient } from "@/lib/utils/supabase/client";
 import styles from "./PairMachineModal.module.scss";
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function generateCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 interface PairMachineModalProps {
@@ -26,6 +36,7 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
     time_remaining: number;
   } | null>(null);
   const [refreshingTimer, setRefreshingTimer] = useState(false);
+  const [endingSession, setEndingSession] = useState(false);
 
   const fetchSessionStatus = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -116,6 +127,52 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
       console.error("Failed to refresh timer");
     } finally {
       setRefreshingTimer(false);
+    }
+  };
+
+  const handleEndSession = async () => {
+    setEndingSession(true);
+    try {
+      const supabase = createClient();
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: session } = await supabase
+        .from("machine_sessions")
+        .select("id, machine_id")
+        .eq("user_id", user.id)
+        .eq("status", "paired")
+        .maybeSingle();
+
+      if (!session) {
+        setPairedSession(null);
+        return;
+      }
+
+      const newCode = generateCode();
+
+      await supabase
+        .from("machine_sessions")
+        .update({
+          session_code: newCode,
+          status: "waiting",
+          user_id: null,
+          expires_at: null,
+          paired_at: null,
+        })
+        .eq("id", session.id);
+
+      await supabase
+        .from("machines")
+        .update({ current_user_id: null })
+        .eq("id", session.machine_id);
+
+      setPairedSession(null);
+    } catch {
+      console.error("Failed to end session");
+    } finally {
+      setEndingSession(false);
     }
   };
 
@@ -213,6 +270,16 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
               >
                 <RotateCcw size={14} className={refreshingTimer ? styles.spinning : ""} />
                 {refreshingTimer ? "Refreshing..." : "Perpanjang Waktu (+1:30)"}
+              </button>
+
+              <button
+                type="button"
+                className={styles.endSessionBtn}
+                onClick={handleEndSession}
+                disabled={endingSession}
+              >
+                <Power size={14} />
+                {endingSession ? "Mengakhiri..." : "Akhiri Sesi"}
               </button>
             </div>
           </div>

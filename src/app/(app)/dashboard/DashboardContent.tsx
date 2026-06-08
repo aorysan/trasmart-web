@@ -311,6 +311,23 @@ const DashboardContent = memo(function DashboardContent({
   const isToday = selectedDate === getTodayString();
   const visibleHistory: HistoryEntry[] = localTransactions[selectedDate] ?? [];
 
+  // Pagination for history (per selected date)
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyPageSize = 6;
+  useEffect(() => {
+    // Reset to first page when date changes
+    setHistoryPage(1);
+  }, [selectedDate]);
+
+  const historyTotalPages = Math.max(
+    Math.ceil(visibleHistory.length / historyPageSize),
+    1,
+  );
+  const clampedHistoryPage = Math.min(historyPage, historyTotalPages);
+  const historyStart = (clampedHistoryPage - 1) * historyPageSize;
+  const historyEnd = historyStart + historyPageSize;
+  const visibleHistoryPage = visibleHistory.slice(historyStart, historyEnd);
+
   const historyLabel = isToday ? "Hari Ini" : formatDisplayDate(selectedDate);
   const progressPercent = Math.min(
     (localWallet.totalPoints / Math.max(localWallet.redemptionThreshold, 1)) *
@@ -551,7 +568,7 @@ const DashboardContent = memo(function DashboardContent({
                   Tidak ada setoran pada {formatDisplayDate(selectedDate)}.
                 </p>
               ) : (
-                visibleHistory.map((entry) => (
+                visibleHistoryPage.map((entry) => (
                   <div key={entry.id} className={styles.historyItem}>
                     <div className={getHistoryIconClass(entry.iconVariant)}>
                       {getHistoryIcon(entry.iconVariant)}
@@ -568,6 +585,32 @@ const DashboardContent = memo(function DashboardContent({
                     </span>
                   </div>
                 ))
+              )}
+
+              {visibleHistory.length > historyPageSize && (
+                <div className={styles.historyPagination}>
+                  <button
+                    type="button"
+                    className={styles.historyPageBtn}
+                    onClick={() => setHistoryPage((p) => Math.max(p - 1, 1))}
+                    disabled={clampedHistoryPage === 1}
+                  >
+                    Sebelumnya
+                  </button>
+
+                  <div className={styles.historyPageInfo}>
+                    Halaman {clampedHistoryPage} dari {historyTotalPages}
+                  </div>
+
+                  <button
+                    type="button"
+                    className={styles.historyPageBtn}
+                    onClick={() => setHistoryPage((p) => Math.min(p + 1, historyTotalPages))}
+                    disabled={clampedHistoryPage === historyTotalPages}
+                  >
+                    Berikutnya
+                  </button>
+                </div>
               )}
             </div>
           </div>

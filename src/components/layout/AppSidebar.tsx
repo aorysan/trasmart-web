@@ -67,14 +67,16 @@ const AppSidebar: React.FC = () => {
   return (
     <>
       {/* Mobile Toggle Button */}
-      <button
-        className={styles.mobileToggle}
-        type="button"
-        onClick={toggleMobileSidebar}
-        aria-label="Toggle sidebar"
-      >
-        <Menu size={22} />
-      </button>
+      {!isMobileOpen && (
+        <button
+          className={styles.mobileToggle}
+          type="button"
+          onClick={toggleMobileSidebar}
+          aria-label="Toggle sidebar"
+        >
+          <Menu size={22} />
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside

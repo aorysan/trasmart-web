@@ -76,7 +76,7 @@ void setup() {
   lcd.print("Kode: ");
   lcd.print(currentSessionCode);
   lcd.setCursor(0, 1);
-  lcd.print("Scan di web   ");
+  lcd.print("Masukkan kode ke web");
 }
 
 void loop() {
@@ -103,7 +103,7 @@ void loop() {
     lcd.print(currentSessionCode);
     lcd.print(" ");
     lcd.setCursor(0, 1);
-    lcd.print("Scan di web   ");
+    lcd.print("Masukkan kode ke web");
     delay(200);
     return;
   }

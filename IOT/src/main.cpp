@@ -130,8 +130,8 @@ void loop() {
     unsigned long startTime = millis();
     bool logamDitemukan = false;
 
-    while (millis() - startTime < 5000) { 
-      int sisaWaktu = 5 - ((millis() - startTime) / 1000);
+    while (millis() - startTime < 3000) { 
+      int sisaWaktu = 3 - ((millis() - startTime) / 1000);
       
       lcd.setCursor(0, 1);
       lcd.print("Cek Logam: ");
@@ -142,23 +142,21 @@ void loop() {
         logamDitemukan = true;
         break;
       }
-      delay(100);
     }
 
     lcd.clear();
     if (logamDitemukan) {
+      myServo.write(180);
       lcd.print("LOGAM +15 Poin");
       client.publish("vending/data", "Logam Terdeteksi");
       kirimKeSupabase("LOGAM", 15);
-      myServo.write(180);
     } else {
+      myServo.write(0);
       lcd.print("PLASTIK +10 Poin");
       client.publish("vending/data", "Plastik Terdeteksi");
       kirimKeSupabase("PLASTIK", 10);
-      myServo.write(0);
     }
 
-    delay(3000);
     myServo.write(90);
     lcd.clear();
     lcd.print("Selesai!");

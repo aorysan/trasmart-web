@@ -10,6 +10,8 @@ import type {
   RewardData,
 } from "@/types/reward";
 import PageTopbar from "@/components/layout/PageTopbar";
+import PointsCard from "@/components/layout/PointsCard";
+import { useUser } from "@/contexts/UserContext";
 
 function formatRedeemedDate(isoString: string): string {
   return new Intl.DateTimeFormat("id-ID", {
@@ -37,6 +39,9 @@ export default function RewardContent({ initialData }: RewardContentProps) {
   const [redeemedPage, setRedeemedPage] = useState(1);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const redeemedPageSize = 6;
+  const { user: userProfile } = useUser();
+  const creditCardName = userProfile?.fullName
+    ?? "User";
 
   const getCategoryButtonClassName = (categoryId: string): string => {
     if (categoryId === "all") return styles.categoryBtnAll;
@@ -125,18 +130,7 @@ export default function RewardContent({ initialData }: RewardContentProps) {
         notificationBadgeClassName={styles.notificationBadge}
       />
 
-      <div className={styles.pointsCard}>
-        <div className={styles.pointsContent}>
-          <p className={styles.pointsLabel}>Poin Saat Ini</p>
-          <div className={styles.pointsDisplay}>
-            <span className={styles.pointsAmount}>{currentPoints}</span>
-            <span className={styles.pointsUnit}>Pts</span>
-          </div>
-        </div>
-        <div className={styles.pointsInfo}>
-          <p className={styles.infoText}>Tukarkan poin dengan reward pilihan di bawah!</p>
-        </div>
-      </div>
+      <PointsCard points={currentPoints} userName={creditCardName} />
 
       <div className={styles.categoryContainer}>
         <div className={styles.categoryScroll}>

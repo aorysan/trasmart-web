@@ -3,8 +3,7 @@
 
 /* Main Container */
 .mainContainer {
-  padding: 1rem;
-  padding-top: 3.75rem;
+  padding: 1.5rem;
 
   @media (min-width: $desktop) {
     padding: 2rem;
@@ -34,14 +33,6 @@
   align-items: center;
   margin-bottom: 2rem;
   gap: 1rem;
-
-  @media (max-width: 1023px) {
-    padding-left: 3rem;
-  }
-
-  @media (min-width: $desktop) {
-    padding-left: 0;
-  }
 }
 
 .topbarContent {

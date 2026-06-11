@@ -2,6 +2,11 @@
 
 import { memo } from "react";
 import dynamic from "next/dynamic";
+import { useUser } from "@/contexts/UserContext";
+import { useSidebar } from "@/contexts/SidebarContext";
+import Image from "next/image";
+import { User } from "lucide-react";
+import brandStyles from "./PageTopbar.module.scss";
 
 const NotificationBell = dynamic(
   () => import("@/components/layout/NotificationBell"),
@@ -25,17 +30,45 @@ const PageTopbar = memo(function PageTopbar({
   notificationBtnClassName,
   notificationBadgeClassName,
 }: PageTopbarProps) {
+  const { isMobile } = useSidebar();
+  const { user: userProfile } = useUser();
+
   return (
-    <div className={topbarClassName}>
-      <div className={topbarContentClassName}>
-        <h2>{title}</h2>
-        <p>{description}</p>
+    <>
+      {isMobile && (
+        <div className={brandStyles.mobileBrandRow}>
+          <div className={brandStyles.mobileBrandLeft}>
+            <div className={brandStyles.mobileBrandIcon}>
+              <Image width="22" height="22" src="/icon.png" alt="TM" />
+            </div>
+            <span className={brandStyles.mobileBrandText}>TrasMart</span>
+          </div>
+          <div className={brandStyles.mobileBrandRight}>
+            <div className={brandStyles.mobileUserAvatar}>
+              {userProfile?.fullName
+                ? userProfile.fullName.charAt(0).toUpperCase()
+                : <User size={14} />}
+            </div>
+            <NotificationBell
+              buttonClassName={notificationBtnClassName}
+              badgeClassName={notificationBadgeClassName}
+            />
+          </div>
+        </div>
+      )}
+      <div className={topbarClassName}>
+        <div className={topbarContentClassName}>
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+        {!isMobile && (
+          <NotificationBell
+            buttonClassName={notificationBtnClassName}
+            badgeClassName={notificationBadgeClassName}
+          />
+        )}
       </div>
-      <NotificationBell
-        buttonClassName={notificationBtnClassName}
-        badgeClassName={notificationBadgeClassName}
-      />
-    </div>
+    </>
   );
 });
 

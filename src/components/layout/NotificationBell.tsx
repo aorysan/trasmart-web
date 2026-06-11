@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Gift, Recycle } from "lucide-react";
 import styles from "./NotificationBell.module.scss";
 import { createClient } from "@/lib/utils/supabase/client";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 type NotificationType = "transaction" | "redemption";
 
@@ -76,6 +77,7 @@ const NotificationBell = memo(function NotificationBell({
   buttonClassName,
   badgeClassName,
 }: Props) {
+  const { isMobile } = useSidebar();
   const supabase = useMemo(() => createClient(), []);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -319,8 +321,9 @@ const NotificationBell = memo(function NotificationBell({
         className={buttonClassName}
         onClick={handleToggle}
         aria-label="Buka notifikasi"
+        style={isMobile ? { padding: "0.45rem" } : undefined}
       >
-        <Bell size={24} />
+        <Bell size={isMobile ? 18 : 24} />
         {hasUnread && <span className={badgeClassName}></span>}
       </button>
 

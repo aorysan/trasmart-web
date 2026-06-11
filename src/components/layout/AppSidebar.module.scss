@@ -1,44 +1,3 @@
-/* ---- Mobile Toggle ---- */
-.mobileToggle {
-  display: none;
-  position: fixed;
-  top: 0.75rem;
-  left: 1rem;
-  z-index: 45;
-  background: linear-gradient(135deg, #166534, #15803d);
-  border: none;
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.65rem;
-  min-width: 44px;
-  min-height: 44px;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(22, 101, 52, 0.35);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 18px rgba(22, 101, 52, 0.45);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--color-primary-glow, #4ade80);
-    outline-offset: 2px;
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  @media (max-width: 1023px) {
-    display: flex;
-  }
-}
-
 /* ---- Sidebar Shell ---- */
 .sidebar {
   position: fixed;
@@ -73,12 +32,6 @@
     z-index: 1;
   }
 
-  @media (max-width: 1023px) {
-    transform: translateX(-100%);
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-
   @media (min-width: 1024px) {
     position: sticky;
     top: 1rem;
@@ -95,7 +48,6 @@
   width: 260px;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
-  transform: translateX(0) !important;
 
   @media (min-width: 1024px) {
     width: 260px;
@@ -106,10 +58,6 @@
   width: 90px;
   padding-left: 1.2rem;
   padding-right: 1.2rem;
-
-  @media (max-width: 1023px) {
-    transform: translateX(-100%);
-  }
 
   @media (min-width: 1024px) {
     width: 90px;
@@ -487,19 +435,81 @@
   transition: transform 0.2s ease;
 }
 
-/* ---- Mobile Overlay ---- */
-.mobileOverlay {
-  display: none;
+/* ---- Bottom Navigation Bar (mobile) ---- */
+.bottomNav {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(2px);
-  z-index: 30;
-  animation: fadeIn 0.2s ease;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: linear-gradient(160deg, #14532d 0%, #166534 60%, #15803d 100%);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
 
-  @media (max-width: 1023px) {
-    display: block;
+  @media (min-width: 1024px) {
+    display: none;
   }
+}
+
+.bottomNavItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0.75rem;
+  text-decoration: none;
+  color: rgba(158, 207, 185, 0.7);
+  transition: color 0.18s ease;
+  min-width: 64px;
+  min-height: 44px;
+  position: relative;
+
+  &:hover {
+    color: white;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: -2px;
+  }
+}
+
+.bottomNavItemActive {
+  color: white !important;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: #4ade80;
+    border-radius: 0 0 3px 3px;
+  }
+}
+
+.bottomNavIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s ease;
+
+  .bottomNavItemActive & {
+    transform: scale(1.1);
+  }
+}
+
+.bottomNavLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* ---- Keyframes ---- */
@@ -511,14 +521,5 @@
   to {
     opacity: 1;
     transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }

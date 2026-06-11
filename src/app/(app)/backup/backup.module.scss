@@ -2,7 +2,6 @@
 
 .mainContainer {
   padding: 1.5rem;
-  padding-top: 3.75rem;
   max-width: 1400px;
   margin: 0 auto;
 
@@ -20,10 +19,6 @@
   gap: 1rem;
   margin-bottom: 2rem;
 
-  @media (max-width: 1023px) {
-    padding-left: 3rem;
-  }
-
   @media (min-width: 768px) {
     align-items: flex-end;
     gap: 2rem;
@@ -31,7 +26,6 @@
 
   @media (min-width: 1024px) {
     align-items: center;
-    padding-left: 0;
   }
 }
 

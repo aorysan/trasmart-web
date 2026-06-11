@@ -428,14 +428,6 @@ export default function AccountRoute() {
         </div>
 
         <div className={styles.sidebar}>
-          <div className={styles.pointsCard}>
-            <p className={styles.pointsCaption}>Saldo Poin Aktif</p>
-            <div className={styles.pointsValueWrap}>
-              <span className={styles.pointsValue}>{pointBalance}</span>
-              <span className={styles.pointsUnit}>Pts</span>
-            </div>
-          </div>
-
           <div className={styles.actionsCard}>
             <h3 className={styles.actionsTitle}>Quick Actions</h3>
             <button

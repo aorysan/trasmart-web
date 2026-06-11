@@ -23,9 +23,15 @@ import {
   CheckCircle,
 } from "lucide-react";
 import styles from "./dashboard.module.scss";
+import brandStyles from "@/components/layout/PageTopbar.module.scss";
 import type { HistoryEntry, HistoryIconVariant } from "@/types/dashboard";
 import dynamic from "next/dynamic";
+import Image from "next/image";
+import { User as UserIcon } from "lucide-react";
 import PairMachineModal from "@/components/layout/PairMachineModal";
+import PointsCard from "@/components/layout/PointsCard";
+import { useSidebar } from "@/contexts/SidebarContext";
+import { useUser } from "@/contexts/UserContext";
 
 const NotificationBell = dynamic(
   () => import("@/components/layout/NotificationBell"),
@@ -111,10 +117,8 @@ const DashboardContent = memo(function DashboardContent({
   chart,
   allTransactionsByDate,
 }: DashboardContentProps) {
-  const creditCardName = userEmail
-    .split("@")[0]
-    .replace(/[._]/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const { user: userProfile } = useUser();
+  const creditCardName = userProfile?.fullName;
   const router = useRouter();
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<{
@@ -360,26 +364,7 @@ const DashboardContent = memo(function DashboardContent({
       <DashboardTopbar />
 
       {/* Credit Card — Total Points */}
-      <div className={styles.creditCard}>
-        <div className={styles.creditCardPattern} />
-        <div className={styles.creditCardPattern2} />
-        <div className={styles.creditCardHeader}>
-          <span className={styles.creditCardBrand}>TrasMart</span>
-          <div className={styles.creditCardChip}>
-            <div className={styles.creditCardChipIcon} />
-          </div>
-        </div>
-        <div className={styles.creditCardBalance}>
-          <span className={styles.creditCardAmount}>
-            {localWallet.totalPoints.toLocaleString("id-ID")}
-          </span>
-          <span className={styles.creditCardLabel}>Total Poin</span>
-        </div>
-        <div className={styles.creditCardFooter}>
-          <span className={styles.creditCardName}>{creditCardName}</span>
-          <span className={styles.creditCardExpiry}>06/28</span>
-        </div>
-      </div>
+      <PointsCard points={localWallet.totalPoints} userName={creditCardName} />
 
       {/* Primary Action Bar */}
       <button
@@ -703,27 +688,55 @@ const DashboardContent = memo(function DashboardContent({
 });
 
 function DashboardTopbar() {
+  const { isMobile } = useSidebar();
+  const { user: userProfile } = useUser();
+
   return (
-    <header className={styles.header}>
-      <div className={styles.headerLeft}>
-        <div className={styles.greeting}>
-          <span className={styles.greetingEmoji}>
-            <Leaf size={18} />
-          </span>
-          <span>Selamat Datang</span>
+    <>
+      {isMobile && (
+        <div className={brandStyles.mobileBrandRow}>
+          <div className={brandStyles.mobileBrandLeft}>
+            <div className={brandStyles.mobileBrandIcon}>
+              <Image width="22" height="22" src="/icon.png" alt="TM" />
+            </div>
+            <span className={brandStyles.mobileBrandText}>TrasMart</span>
+          </div>
+          <div className={brandStyles.mobileBrandRight}>
+            <div className={brandStyles.mobileUserAvatar}>
+              {userProfile?.fullName
+                ? userProfile.fullName.charAt(0).toUpperCase()
+                : <UserIcon size={14} />}
+            </div>
+            <NotificationBell
+              buttonClassName={styles.notifBtn}
+              badgeClassName={styles.notifBadge}
+            />
+          </div>
         </div>
-        <h1 className={styles.headerTitle}>Dashboard</h1>
-        <p className={styles.headerDesc}>
-          Pantau poin dan riwayat setoran sampahmu di sini.
-        </p>
-      </div>
-      <div className={styles.headerRight}>
-        <NotificationBell
-          buttonClassName={styles.notifBtn}
-          badgeClassName={styles.notifBadge}
-        />
-      </div>
-    </header>
+      )}
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
+          <div className={styles.greeting}>
+            <span className={styles.greetingEmoji}>
+              <Leaf size={18} />
+            </span>
+            <span>Selamat Datang</span>
+          </div>
+          <h1 className={styles.headerTitle}>Dashboard</h1>
+          <p className={styles.headerDesc}>
+            Pantau poin dan riwayat setoran sampahmu di sini.
+          </p>
+        </div>
+        {!isMobile && (
+          <div className={styles.headerRight}>
+            <NotificationBell
+              buttonClassName={styles.notifBtn}
+              badgeClassName={styles.notifBadge}
+            />
+          </div>
+        )}
+      </header>
+    </>
   );
 }
 

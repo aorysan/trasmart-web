@@ -1,0 +1,54 @@
+/* ---- Mobile Brand Row ---- */
+.mobileBrandRow {
+  display: none;
+
+  @media (max-width: 1023px) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    margin-bottom: 0.25rem;
+    background: transparent;
+  }
+}
+
+.mobileBrandLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobileBrandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.mobileBrandText {
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.mobileBrandRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobileUserAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #4ade80, #166534);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}

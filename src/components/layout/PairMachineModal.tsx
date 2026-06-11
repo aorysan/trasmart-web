@@ -290,7 +290,7 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
             </div>
             <h3>Hubungkan ke Mesin</h3>
             <p className={styles.pairDesc}>
-              Lihat kode di layar mesin TrashMart, lalu masukkan di bawah ini.
+              Lihat kode di layar mesin TraMart, lalu masukkan di bawah ini.
             </p>
 
             <form onSubmit={handleSubmit} className={styles.form}>

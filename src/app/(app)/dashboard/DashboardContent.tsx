@@ -9,7 +9,6 @@ import {
   Leaf,
   HandCoins,
   Recycle,
-  Target,
   TrendingUp,
   Zap,
   ChevronRight,
@@ -87,6 +86,7 @@ function getTodayString(): string {
 
 interface DashboardContentProps {
   userId: string;
+  userEmail: string;
   wallet: {
     totalPoints: number;
     redemptionThreshold: number;
@@ -105,11 +105,16 @@ interface DashboardContentProps {
 
 const DashboardContent = memo(function DashboardContent({
   userId,
+  userEmail,
   wallet,
   cta,
   chart,
   allTransactionsByDate,
 }: DashboardContentProps) {
+  const creditCardName = userEmail
+    .split("@")[0]
+    .replace(/[._]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
   const router = useRouter();
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<{
@@ -354,68 +359,25 @@ const DashboardContent = memo(function DashboardContent({
     <div className={styles.mainContainer}>
       <DashboardTopbar />
 
-      {/* Stat Cards */}
-      <div className={styles.statCards}>
-        <div className={styles.statCard}>
-          <div className={styles.statCardIcon}>
-            <Zap size={20} />
-          </div>
-          <div className={styles.statCardBody}>
-            <span className={styles.statCardLabel}>Total Poin</span>
-            <span className={styles.statCardValue}>
-              {localWallet.totalPoints.toLocaleString("id-ID")}
-            </span>
+      {/* Credit Card — Total Points */}
+      <div className={styles.creditCard}>
+        <div className={styles.creditCardPattern} />
+        <div className={styles.creditCardPattern2} />
+        <div className={styles.creditCardHeader}>
+          <span className={styles.creditCardBrand}>TrasMart</span>
+          <div className={styles.creditCardChip}>
+            <div className={styles.creditCardChipIcon} />
           </div>
         </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statCardIcon}>
-            <Target size={20} />
-          </div>
-          <div className={styles.statCardBody}>
-            <span className={styles.statCardLabel}>Target Berikutnya</span>
-            <span className={styles.statCardValue}>
-              {localWallet.redemptionLabel !== "-"
-                ? localWallet.redemptionLabel
-                : "Belum ada"}
-            </span>
-            <span className={styles.statCardSub}>
-              {localWallet.redemptionThreshold > 0
-                ? `Min. ${localWallet.redemptionThreshold.toLocaleString("id-ID")} Pts`
-                : "Setor sampah untuk mulai"}
-            </span>
-          </div>
+        <div className={styles.creditCardBalance}>
+          <span className={styles.creditCardAmount}>
+            {localWallet.totalPoints.toLocaleString("id-ID")}
+          </span>
+          <span className={styles.creditCardLabel}>Total Poin</span>
         </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statCardIcon}>
-            <TrendingUp size={20} />
-          </div>
-          <div className={styles.statCardBody}>
-            <span className={styles.statCardLabel}>Kurang</span>
-            <span className={styles.statCardValue}>
-              {Math.max(0, pointsToGo).toLocaleString("id-ID")}
-            </span>
-            <span className={styles.statCardSub}>poin lagi</span>
-          </div>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statCardIcon}>
-            <Recycle size={20} />
-          </div>
-          <div className={styles.statCardBody}>
-            <span className={styles.statCardLabel}>Progress</span>
-            <span className={styles.statCardValue}>
-              {Math.round(progressPercent)}%
-            </span>
-            <div className={styles.statCardProgress}>
-              <div
-                className={styles.statCardProgressFill}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+        <div className={styles.creditCardFooter}>
+          <span className={styles.creditCardName}>{creditCardName}</span>
+          <span className={styles.creditCardExpiry}>06/28</span>
         </div>
       </div>
 
@@ -595,7 +557,7 @@ const DashboardContent = memo(function DashboardContent({
                     onClick={() => setHistoryPage((p) => Math.max(p - 1, 1))}
                     disabled={clampedHistoryPage === 1}
                   >
-                    Sebelumnya
+                    &lt;
                   </button>
 
                   <div className={styles.historyPageInfo}>
@@ -610,7 +572,7 @@ const DashboardContent = memo(function DashboardContent({
                     }
                     disabled={clampedHistoryPage === historyTotalPages}
                   >
-                    Berikutnya
+                    &gt;
                   </button>
                 </div>
               )}

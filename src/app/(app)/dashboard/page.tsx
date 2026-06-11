@@ -39,7 +39,6 @@ export default async function DashboardRoute() {
   return (
     <DashboardContent
       userId={user.id}
-      userEmail={user.email ?? ""}
       wallet={data.wallet}
       cta={data.cta}
       chart={data.chart}

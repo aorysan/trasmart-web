@@ -196,27 +196,25 @@ export function useAuth() {
       try {
         setError(null);
 
-        const updateData: any = {};
-        if (updates.username !== undefined)
-          updateData.username = updates.username;
-        if (updates.fullName !== undefined)
-          updateData.full_name = updates.fullName;
-        if (updates.phone !== undefined) updateData.phone = updates.phone;
-        if (updates.address !== undefined) updateData.address = updates.address;
-        if (updates.avatar !== undefined)
-          updateData.avatar_url = updates.avatar;
-        if (updates.city !== undefined) updateData.city = updates.city;
-        if (updates.postal_code !== undefined)
-          updateData.postal_code = updates.postal_code;
+        const body: Record<string, string> = {};
+        if (updates.username !== undefined) body.username = updates.username;
+        if (updates.fullName !== undefined) body.full_name = updates.fullName;
+        if (updates.phone !== undefined) body.phone = updates.phone;
+        if (updates.address !== undefined) body.address = updates.address;
+        if (updates.avatar !== undefined) body.avatar_url = updates.avatar;
+        if (updates.city !== undefined) body.city = updates.city;
+        if (updates.postal_code !== undefined) body.postal_code = updates.postal_code;
 
-        const { error: err } = await supabase
-          .from("profiles")
-          .update(updateData)
-          .eq("id", currentUser.id)
-          .select();
+        const res = await fetch("/api/profile/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
-        if (err) {
-          throw new Error(err.message || "Failed to update profile");
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Failed to update profile");
         }
 
         const currentProfile = userProfileRef.current;
@@ -230,7 +228,7 @@ export function useAuth() {
         throw err;
       }
     },
-    [supabase],
+    [],
   );
 
   const changePassword = useCallback(

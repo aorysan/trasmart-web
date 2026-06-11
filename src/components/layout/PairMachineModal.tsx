@@ -2,6 +2,8 @@
 
 import { memo, FormEvent, useEffect, useState, useCallback, useRef } from "react";
 import { X, Recycle, Clock, RotateCcw, CheckCircle, Power } from "lucide-react";
+import { useRealtimeSession } from "@/hooks/useRealtimeSession";
+import { useUser } from "@/contexts/UserContext";
 import styles from "./PairMachineModal.module.scss";
 
 function formatTime(seconds: number): string {
@@ -26,13 +28,16 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
     time_remaining: number;
   } | null>(null);
   const [refreshingTimer, setRefreshingTimer] = useState(false);
+  const [refreshingError, setRefreshingError] = useState<string | null>(null);
   const [endingSession, setEndingSession] = useState(false);
+  const { user } = useUser();
 
   const fetchSessionStatus = useCallback(async (signal?: AbortSignal) => {
     try {
       const res = await fetch("/api/machines/session", { signal });
       const data = await res.json();
 
+      setRefreshingError(null);
       if (data.paired && data.expires_at) {
         const now = new Date().getTime();
         const expires = new Date(data.expires_at).getTime();
@@ -51,7 +56,9 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
     }
   }, []);
 
-  // Fetch session on modal open + local countdown (no HTTP for ticking)
+  useRealtimeSession(user?.id, fetchSessionStatus, isOpen);
+
+  // Fetch session on modal open + recalc countdown from expires_at
   const prevSessionRef = useRef(pairedSession);
   useEffect(() => {
     if (!isOpen) return;
@@ -63,9 +70,11 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
     const countdown = setInterval(() => {
       setPairedSession((prev) => {
         if (!prev) return null;
-        const next = prev.time_remaining - 1;
-        if (next <= 0) return null;
-        return { ...prev, time_remaining: next };
+        const remaining = Math.max(0, Math.floor(
+          (new Date(prev.expires_at).getTime() - Date.now()) / 1000
+        ));
+        if (remaining <= 0) return null;
+        return { ...prev, time_remaining: remaining };
       });
     }, 1000);
 
@@ -104,17 +113,29 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Sync session when transaction occurs (IoT refreshes expiry)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onActivity = () => fetchSessionStatus();
+    window.addEventListener("trasmart:activity-changed", onActivity);
+    return () => window.removeEventListener("trasmart:activity-changed", onActivity);
+  }, [isOpen, fetchSessionStatus]);
+
   const handleRefreshTimer = async () => {
     setRefreshingTimer(true);
+    setRefreshingError(null);
     try {
       const res = await fetch("/api/machines/refresh", { method: "POST" });
       const data = await res.json();
 
       if (data.success) {
         fetchSessionStatus();
+      } else {
+        setRefreshingError(data.message || "Gagal memperpanjang waktu.");
       }
     } catch {
-      console.error("Failed to refresh timer");
+      setRefreshingError("Gagal terhubung ke server.");
     } finally {
       setRefreshingTimer(false);
     }
@@ -241,6 +262,10 @@ const PairMachineModal = memo(function PairMachineModal({ isOpen, onClose, onPai
                 <Power size={14} />
                 {endingSession ? "Mengakhiri..." : "Akhiri Sesi"}
               </button>
+
+              {refreshingError && (
+                <p className={styles.errorText}>{refreshingError}</p>
+              )}
             </div>
           </div>
         ) : (

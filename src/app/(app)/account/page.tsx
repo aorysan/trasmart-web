@@ -56,7 +56,6 @@ export default function AccountRoute() {
   const [isEditing, setIsEditing] = useState(false);
   const { user, loading, error, updateUser, signOut, changePassword } =
     useUser();
-  const pointBalance = user?.points ?? 0;
   const [toast, setToast] = useState<{
     type: "success" | "error";
     message: string;

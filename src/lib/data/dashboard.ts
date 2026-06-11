@@ -58,15 +58,6 @@ function toLocalDateStringWIB(isoString: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export function formatDisplayDate(dateStr: string): string {
-  return new Date(dateStr + "T00:00:00Z").toLocaleDateString("id-ID", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: "Asia/Jakarta",
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Fetch functions
 // ---------------------------------------------------------------------------

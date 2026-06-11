@@ -47,15 +47,8 @@ export async function POST() {
     );
   }
 
-  const { data: updatedSession } = await supabase
-    .from("machine_sessions")
-    .select("expires_at")
-    .eq("machine_id", session.machine_id)
-    .eq("status", "paired")
-    .single();
-
   return NextResponse.json({
     success: true,
-    expires_at: updatedSession?.expires_at,
+    expires_at: data,
   });
 }

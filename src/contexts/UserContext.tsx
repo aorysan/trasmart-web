@@ -47,4 +47,3 @@ export function useUser() {
   }
   return context;
 }
-export type { UserContextType };

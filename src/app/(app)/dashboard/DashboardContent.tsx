@@ -4,6 +4,7 @@ import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@/lib/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
+import { useRealtimeSession } from "@/hooks/useRealtimeSession";
 import Link from "next/link";
 import {
   Leaf,
@@ -92,7 +93,6 @@ function getTodayString(): string {
 
 interface DashboardContentProps {
   userId: string;
-  userEmail: string;
   wallet: {
     totalPoints: number;
     redemptionThreshold: number;
@@ -111,7 +111,6 @@ interface DashboardContentProps {
 
 const DashboardContent = memo(function DashboardContent({
   userId,
-  userEmail,
   wallet,
   cta,
   chart,
@@ -243,31 +242,26 @@ const DashboardContent = memo(function DashboardContent({
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [router]);
 
-  // Fetch session once on mount + start local countdown (no HTTP)
+  // Fetch session once on mount + recalc countdown from expires_at
   const prevActiveRef = useRef(activeSession);
   useEffect(() => {
     const abort = new AbortController();
-
     fetchSessionStatus(abort.signal);
 
     const countdown = setInterval(() => {
       setActiveSession((prev) => {
         if (!prev) return null;
-        const next = prev.time_remaining - 1;
-        if (next <= 0) return null;
-        return { ...prev, time_remaining: next };
+        const remaining = Math.max(0, Math.floor(
+          (new Date(prev.expires_at).getTime() - Date.now()) / 1000
+        ));
+        if (remaining <= 0) return null;
+        return { ...prev, time_remaining: remaining };
       });
     }, 1000);
-
-    const SYNC_INTERVAL_MS = 30000;
-    const sync = setInterval(() => {
-      fetchSessionStatus();
-    }, SYNC_INTERVAL_MS);
 
     return () => {
       abort.abort();
       clearInterval(countdown);
-      clearInterval(sync);
     };
   }, [fetchSessionStatus]);
 
@@ -282,6 +276,15 @@ const DashboardContent = memo(function DashboardContent({
     fetchSessionStatus(abort.signal);
     return () => abort.abort();
   }, [activeSession, fetchSessionStatus]);
+
+  // Sync session when transaction occurs (IoT refreshes expiry)
+  useEffect(() => {
+    const onActivity = () => fetchSessionStatus();
+    window.addEventListener("trasmart:activity-changed", onActivity);
+    return () => window.removeEventListener("trasmart:activity-changed", onActivity);
+  }, [fetchSessionStatus]);
+
+  useRealtimeSession(userId, fetchSessionStatus);
 
   const handleExtendSession = async () => {
     setExtendingSession(true);

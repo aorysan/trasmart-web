@@ -8,11 +8,6 @@ export interface RawReward {
   created_at: string;
 }
 
-export interface RawUserRedemptionWithReward {
-  reward_id: string;
-  rewards: { points_required: number } | { points_required: number }[] | null;
-}
-
 export interface RewardItem {
   id: string;
   name: string;

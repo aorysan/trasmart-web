@@ -110,23 +110,6 @@ async function fetchRewards(
   return (data ?? []) as RawReward[];
 }
 
-async function fetchRewardUsageMap(
-  supabase: SupabaseClient,
-): Promise<Map<string, number>> {
-  const { data, error } = await supabase.rpc("get_reward_usage_counts");
-
-  if (error) {
-    throw new Error(`fetchRewardUsageMap: ${error.message}`);
-  }
-
-  const map = new Map<string, number>();
-  for (const row of data ?? []) {
-    map.set(row.reward_id, Number(row.usage_count));
-  }
-
-  return map;
-}
-
 async function fetchRedeemedRewards(
   userId: string,
   supabase: SupabaseClient,

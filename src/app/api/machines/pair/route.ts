@@ -34,21 +34,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (data?.success) {
-    const machineId = data.machine_id as string;
-    const { data: sessionData } = await supabase
-      .from("machine_sessions")
-      .select("session_code, expires_at")
-      .eq("machine_id", machineId)
-      .eq("status", "paired")
-      .eq("user_id", user.id)
-      .single();
-
-    if (sessionData) {
-      data.session_code = sessionData.session_code;
-      data.expires_at = sessionData.expires_at;
-    }
-  }
-
   return NextResponse.json(data);
 }

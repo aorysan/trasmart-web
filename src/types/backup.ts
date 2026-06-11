@@ -17,23 +17,6 @@ export interface BackupStatus {
   files: BackupFile[]
 }
 
-export interface BackupRecord {
-  id: string
-  user_id: string
-  category_id: string
-  poin: number
-  created_at: string
-  machine_id: string | null
-  status: string
-}
-
-export interface BackupRecordRedemption {
-  id: string
-  user_id: string
-  reward_id: string
-  redeemed_at: string
-}
-
 export interface FilePreview {
   filename: string
   totalRows: number

@@ -341,12 +341,6 @@ const DashboardContent = memo(function DashboardContent({
   const visibleHistoryPage = visibleHistory.slice(historyStart, historyEnd);
 
   const historyLabel = isToday ? "Hari Ini" : formatDisplayDate(selectedDate);
-  const progressPercent = Math.min(
-    (localWallet.totalPoints / Math.max(localWallet.redemptionThreshold, 1)) *
-      100,
-    100,
-  );
-
   const chartDisplayData = hasChartData ? chart.data : [];
 
   const totalPoints = chartDisplayData.reduce((sum, d) => sum + d.rawValue, 0);

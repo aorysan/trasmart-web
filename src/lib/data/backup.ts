@@ -17,8 +17,6 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || "";
 const BACKUP_DIR_TXN = "/backups/transactions";
 const BACKUP_DIR_RED = "/backups/redemptions";
 const BACKUP_DIR_PROFILES = "/backups/profiles";
-const BACKUP_DIR_REF = "/backups/reference";
-
 interface HdfsFileEntry {
   pathSuffix: string;
   length: number;
@@ -163,10 +161,9 @@ export async function getBackupStatus(): Promise<BackupStatus> {
   const supabaseTxnCount = await supabaseCount("transactions");
   const supabaseRedCount = await supabaseCount("user_redemptions");
 
-  const [hdfsTxnCount, hdfsRedCount, hdfsProfCount] = await Promise.all([
+  const [hdfsTxnCount, hdfsRedCount] = await Promise.all([
     lineCount(BACKUP_DIR_TXN, latestFile(txnFiles)),
     lineCount(BACKUP_DIR_RED, latestFile(redFiles)),
-    lineCount(BACKUP_DIR_PROFILES, latestFile(profFiles)),
   ]);
 
   const match =

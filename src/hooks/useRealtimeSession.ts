@@ -10,7 +10,6 @@ export function useRealtimeSession(
   active = true,
 ) {
   const supabase = useMemo(() => createClient(), []);
-  const channelRef = useRef<string | null>(null);
   const onUpdateRef = useRef(onUpdate);
   useEffect(() => {
     onUpdateRef.current = onUpdate;
@@ -20,7 +19,6 @@ export function useRealtimeSession(
     if (!userId || !active) return;
 
     const name = channelId();
-    channelRef.current = name;
     const channel = supabase
       .channel(name)
       .on(

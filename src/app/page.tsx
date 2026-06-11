@@ -86,7 +86,6 @@ const features = [
   },
   {
     icon: MapPin,
-    iconColor: "#10b981",
     title: "Lokasi Mesin",
     desc: "Temukan mesin TrasMart terdekat di area kampus dengan peta interaktif di dashboard.",
     color: "#10b981",

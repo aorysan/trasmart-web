@@ -12,7 +12,6 @@
 
 ## Key Features
 
-
 | Feature                | Description                                                                               |
 | ---------------------- | ----------------------------------------------------------------------------------------- |
 | **Landing Page**       | Informative homepage with stats, benefits, and onboarding                                 |
@@ -22,7 +21,6 @@
 | **Account Management** | Edit profile, view point summary, quick logout                                            |
 | **Machine Pairing**    | Generate a session code on the physical machine and pair it with your account via the web |
 | **Route Protection**   | Middleware ensures only authenticated users access dashboard, rewards, and account pages  |
-
 
 ---
 
@@ -60,7 +58,6 @@ The web app connects to Supabase for authentication, database, and server-side l
 
 ### Web Application
 
-
 | Technology                               | Purpose                                                                 |
 | ---------------------------------------- | ----------------------------------------------------------------------- |
 | Next.js 16 (App Router)                  | Full-stack React framework with SSR, API routes, and middleware         |
@@ -72,9 +69,7 @@ The web app connects to Supabase for authentication, database, and server-side l
 | `lucide-react`                           | Icon library                                                            |
 | `tailwind-merge`                         | Tailwind class conflict resolution                                      |
 
-
 ### IoT Firmware
-
 
 | Component                  | Detail                                                  |
 | -------------------------- | ------------------------------------------------------- |
@@ -87,11 +82,9 @@ The web app connects to Supabase for authentication, database, and server-side l
 | Connectivity               | WiFi + MQTT via `broker.hivemq.com`                     |
 | Communication              | PubSubClient for MQTT, HTTPClient for Supabase REST API |
 
-
 ---
 
 ## Web Application — Pages
-
 
 | Route                  | Page           | Description                                                                                   |
 | ---------------------- | -------------- | --------------------------------------------------------------------------------------------- |
@@ -103,7 +96,6 @@ The web app connects to Supabase for authentication, database, and server-side l
 | `/dashboard`           | Dashboard      | Point balance, activity chart, transaction history, machine status, and machine pairing modal |
 | `/reward`              | Reward Shop    | Reward catalog with category filter, point redemption                                         |
 | `/account`             | Account        | Profile editing, point summary, logout                                                        |
-
 
 ### Authentication Flow
 
@@ -119,8 +111,10 @@ The web app connects to Supabase for authentication, database, and server-side l
 2. **Machine Pairing** — The user enters this code in the pairing modal on the dashboard, which calls `pair_user_with_machine()` to link the machine to their account.
 3. **Deposit Detection** — When an object is detected within 10 cm of the ultrasonic sensor, the machine checks for metal using the inductive proximity sensor (5-second window).
 4. **Reward Calculation**:
-  - Metal detected → `+15 points` (category: logam)
-  - No metal → `+10 points` (category: plastik)
+
+- Metal detected → `+15 points` (category: logam)
+- No metal → `+10 points` (category: plastik)
+
 5. **Transaction Recording** — The machine POSTs the transaction to Supabase `transactions` table and refreshes the session expiry via `refresh_session_expiry()`.
 6. **Servo Activation** — The servo opens the appropriate bin (0° for plastic, 180° for metal).
 7. **MQTT Status** — Machine publishes events to `vending/data` and status to `vending/status`.
@@ -150,7 +144,6 @@ The web app connects to Supabase for authentication, database, and server-side l
 │   └── middleware.ts           # Route protection middleware
 ├── IOT/
 │   ├── src/main.cpp            # ESP32 firmware
-│   ├── include/secrets.h       # WiFi & Supabase credentials (gitignored)
 │   ├── platformio.ini          # PlatformIO project config
 │   └── lib/                    # PlatformIO library dependencies
 ├── next.config.ts              # Image domains, console removal (production)
@@ -208,12 +201,9 @@ pio run --target upload
 pio device monitor
 ```
 
-> **Note:** `IOT/include/secrets.h` is gitignored to protect credentials.
-
 ---
 
 ## Supabase Database RPCs
-
 
 | RPC                                      | Description                              | Called From     |
 | ---------------------------------------- | ---------------------------------------- | --------------- |
@@ -221,7 +211,6 @@ pio device monitor
 | `pair_user_with_machine(p_session_code)` | Pairs authenticated user with a machine  | Web API route   |
 | `refresh_session_expiry(p_machine_id)`   | Extends the current session timeout      | Web API + IoT   |
 | `get_reward_usage_counts()`              | Returns usage statistics for rewards     | Web reward data |
-
 
 ---
 

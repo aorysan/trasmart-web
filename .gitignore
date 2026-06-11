@@ -49,4 +49,4 @@ next-env.d.ts
 # markdown
 claude.md
 AGENTS.md
-secret.sh
+secret.h

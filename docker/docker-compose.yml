@@ -55,9 +55,62 @@ services:
       - namenode
       - datanode
 
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-datanode-2
+    hostname: datanode2
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "9865:9864"
+    volumes:
+      - datanode2:/hadoop/dfs/data
+    networks:
+      - hadoop
+    depends_on:
+      - namenode
+
+  datanode3:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-datanode-3
+    hostname: datanode3
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "9866:9864"
+    volumes:
+      - datanode3:/hadoop/dfs/data
+    networks:
+      - hadoop
+    depends_on:
+      - namenode
+
+  job:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.job
+    container_name: hadoop-job
+    hostname: job
+    env_file:
+      - ./hadoop.env
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    volumes:
+      - ./../scripts/mapreduce:/opt/mapreduce
+    networks:
+      - hadoop
+    depends_on:
+      - namenode
+      - datanode
+      - datanode2
+      - datanode3
+    command: ["sleep", "infinity"]
+
 volumes:
   namenode:
   datanode:
+  datanode2:
+  datanode3:
 
 networks:
   hadoop:

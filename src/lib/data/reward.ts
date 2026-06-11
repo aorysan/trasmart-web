@@ -164,11 +164,9 @@ async function fetchRedeemedRewards(
     .filter((item): item is RedeemedRewardItem => item !== null);
 }
 
-function toRewardItem(raw: RawReward, usageMap: Map<string, number>): RewardItem {
+function toRewardItem(raw: RawReward): RewardItem {
   const description = raw.description ?? "Reward spesial untuk kamu";
   const category = inferCategory(raw.name, description);
-  const used = usageMap.get(raw.id) ?? 0;
-  const available = Math.max((raw.quantity ?? 0) - used, 0);
 
   return {
     id: raw.id,
@@ -177,7 +175,7 @@ function toRewardItem(raw: RawReward, usageMap: Map<string, number>): RewardItem
     points: raw.points_required,
     category,
     image: normalizeRewardImage(raw.image_url),
-    available,
+    available: raw.quantity,
   };
 }
 
@@ -208,14 +206,13 @@ export async function getRewardData(
 ): Promise<RewardData> {
   const client = supabase ?? createClient();
 
-  const [currentPoints, rawRewards, usageMap, redeemedRewards] = await Promise.all([
+  const [currentPoints, rawRewards, redeemedRewards] = await Promise.all([
     fetchProfilePoints(userId, client),
     fetchRewards(client),
-    fetchRewardUsageMap(client),
     fetchRedeemedRewards(userId, client),
   ]);
 
-  const rewards = rawRewards.map((raw) => toRewardItem(raw, usageMap));
+  const rewards = rawRewards.map(toRewardItem);
 
   return {
     userId,

@@ -17,9 +17,14 @@ import {
   Server,
   Activity,
   Upload,
+  BarChart3,
+  TrendingUp,
+  PieChart,
+  Cpu,
+  Award,
 } from "lucide-react";
 import styles from "./backup.module.scss";
-import type { BackupStatus, FilePreview, TriggerResult } from "@/types/backup";
+import type { BackupStatus, FilePreview, TriggerResult, AnalyticsResult } from "@/types/backup";
 
 interface BackupContentProps {
   initialStatus: BackupStatus | null;
@@ -43,6 +48,10 @@ const BackupContent = memo(function BackupContent({
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [analyticsResults, setAnalyticsResults] = useState<AnalyticsResult[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsTriggering, setAnalyticsTriggering] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -115,6 +124,64 @@ const BackupContent = memo(function BackupContent({
     } catch {
       // ignore
     }
+  }, []);
+
+  const handleFetchAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+    try {
+      const res = await fetch("/api/backup/analytics");
+      const json = await res.json();
+      if (json.success) setAnalyticsResults(json.data);
+      else setAnalyticsError(json.message);
+    } catch {
+      setAnalyticsError("Gagal memuat hasil analytics");
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, []);
+
+  const handleRunAnalytics = useCallback(async () => {
+    setAnalyticsTriggering(true);
+    setAnalyticsError(null);
+    setAnalyticsResults([]);
+    try {
+      const res = await fetch("/api/backup/analytics", { method: "POST" });
+      const json = await res.json();
+      if (!json.success) {
+        setAnalyticsError(json.message);
+        setAnalyticsTriggering(false);
+        return;
+      }
+    } catch {
+      setAnalyticsError("Gagal menjalankan analytics");
+      setAnalyticsTriggering(false);
+      return;
+    }
+
+    // Poll until all 5 results appear or timeout
+    const pollInterval = setInterval(async () => {
+      try {
+        const pollRes = await fetch("/api/backup/analytics");
+        const pollJson = await pollRes.json();
+        if (pollJson.success) {
+          setAnalyticsResults(pollJson.data);
+          if (pollJson.data.length >= 5) {
+            clearInterval(pollInterval);
+            setAnalyticsTriggering(false);
+          }
+        }
+      } catch {
+        // keep polling
+      }
+    }, 3000);
+
+    // Safety timeout after 5 minutes
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      setAnalyticsTriggering(false);
+      setAnalyticsError("Waktu tunggu analytics habis (5 menit). Cek container hadoop-job.");
+    }, 300000);
   }, []);
 
   const formatSize = (bytes: number) => {
@@ -406,6 +473,105 @@ const BackupContent = memo(function BackupContent({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Analytics Dashboard */}
+      <div className={styles.analyticsSection}>
+        <div className={styles.analyticsHeader}>
+          <div className={styles.analyticsHeaderLeft}>
+            <div className={styles.analyticsHeaderIcon}>
+              <BarChart3 size={18} />
+            </div>
+            <div>
+              <h3 className={styles.analyticsTitle}>HDFS Analytics</h3>
+              <p className={styles.analyticsSubtitle}>Hasil MapReduce — insight bisnis dari data di HDFS</p>
+            </div>
+          </div>
+          <div className={styles.analyticsActions}>
+            <button
+              className={styles.refreshBtn}
+              onClick={handleFetchAnalytics}
+              disabled={analyticsLoading}
+              type="button"
+            >
+              <RefreshCw size={16} className={analyticsLoading ? styles.spinning : ""} />
+              {analyticsLoading ? "Memuat..." : "Refresh"}
+            </button>
+            <button
+              className={styles.triggerBtn}
+              onClick={handleRunAnalytics}
+              disabled={analyticsTriggering || !hdfsOnline}
+              type="button"
+            >
+              <Cpu size={14} className={analyticsTriggering ? styles.spinning : ""} />
+              {analyticsTriggering ? (
+                <>Memproses {analyticsResults.length}/5 job...</>
+              ) : "Jalankan Analytics"}
+            </button>
+          </div>
+        </div>
+
+        {analyticsError && (
+          <div className={styles.errorBanner}>
+            <AlertCircle size={20} />
+            <span>{analyticsError}</span>
+          </div>
+        )}
+
+        {analyticsResults.length === 0 && !analyticsLoading && !analyticsError ? (
+          <div className={styles.emptyState}>
+            <BarChart3 size={48} strokeWidth={1.5} />
+            <p>Belum ada hasil analytics</p>
+            <span>Klik "Jalankan Analytics" untuk memproses data di HDFS</span>
+          </div>
+        ) : (
+          <div className={styles.analyticsGrid}>
+            {analyticsResults.map((result) => (
+              <div key={result.jobId} className={styles.analyticsCard}>
+                <div className={styles.analyticsCardHeader}>
+                  {result.jobId === "user_points" && <TrendingUp size={16} />}
+                  {result.jobId === "daily_count" && <Calendar size={16} />}
+                  {result.jobId === "category_rank" && <PieChart size={16} />}
+                  {result.jobId === "reward_rank" && <Award size={16} />}
+                  {result.jobId === "machine_usage" && <Server size={16} />}
+                  <span className={styles.analyticsCardTitle}>{result.jobName}</span>
+                  <span className={styles.analyticsCardBadge}>{result.totalRows} baris</span>
+                </div>
+                <div className={styles.analyticsTableWrap}>
+                  <table className={styles.analyticsTable}>
+                    <thead>
+                      <tr>
+                        {result.header.map((col, i) => (
+                          <th key={i}>{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.rows.slice(0, 5).map((row, ri) => (
+                        <tr key={ri}>
+                          {row.map((cell, ci) => (
+                            <td key={ci}>{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {result.totalRows > 5 && (
+                  <div className={styles.analyticsCardMore}>
+                    <a
+                      href={`/api/backup/files/${encodeURIComponent(`analytics/${result.jobId}/result.csv`)}?download=true`}
+                      className={styles.downloadLink}
+                    >
+                      <Download size={14} />
+                      Download CSV ({result.totalRows} baris)
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   );

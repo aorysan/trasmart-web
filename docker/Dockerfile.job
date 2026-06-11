@@ -1,0 +1,16 @@
+FROM bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+
+USER root
+
+RUN sed -i 's|deb.debian.org|archive.debian.org|g; s|security.debian.org|archive.debian.org|g; s|stretch-updates|stretch|g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends python3 && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV HADOOP_STREAMING_JAR=/opt/hadoop-3.2.1/share/hadoop/tools/lib/hadoop-streaming-3.2.1.jar
+
+COPY scripts/mapreduce/mapper.py /opt/mapreduce/
+COPY scripts/mapreduce/reducer.py /opt/mapreduce/
+COPY scripts/mapreduce/run_analytics.sh /opt/mapreduce/
+
+RUN chmod +x /opt/mapreduce/*.sh

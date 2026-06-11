@@ -369,3 +369,145 @@
 }
 
 .spinning { animation: spin 1s linear infinite; }
+
+/* Analytics Dashboard */
+.analyticsSection {
+  background: $surface-glass;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(22, 101, 52, 0.1);
+  border-radius: 12px;
+  padding: $space-6;
+  margin-top: $space-6;
+}
+
+.analyticsHeader {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: $space-4; margin-bottom: $space-6;
+}
+
+.analyticsHeaderLeft {
+  display: flex; align-items: center; gap: $space-4;
+}
+
+.analyticsHeaderIcon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, $primary-soft, $primary-light);
+  display: flex; align-items: center; justify-content: center;
+  color: $primary;
+}
+
+.analyticsTitle {
+  margin: 0; font-size: 1.05rem; font-weight: 600; color: $text;
+}
+
+.analyticsSubtitle {
+  margin: 2px 0 0; font-size: 0.8rem; color: $text-muted;
+}
+
+.analyticsActions {
+  display: flex; align-items: center; gap: $space-2;
+
+  .refreshBtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px; font-size: 0.82rem;
+    border: 1px solid rgba(22, 101, 52, 0.15);
+    background: $surface; color: $text-secondary; cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) { border-color: $primary-light; color: $primary; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .triggerBtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 0.82rem;
+    border: none; background: linear-gradient(135deg, $primary, $primary-light);
+    color: #fff; cursor: pointer; font-weight: 500;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) { filter: brightness(1.1); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+}
+
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: $space-4;
+}
+
+.analyticsCard {
+  background: $surface;
+  border: 1px solid rgba(22, 101, 52, 0.08);
+  border-radius: 10px; overflow: hidden;
+  transition: box-shadow 0.15s;
+
+  &:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+}
+
+.analyticsCardHeader {
+  display: flex; align-items: center; gap: $space-2;
+  padding: $space-3 $space-4;
+  border-bottom: 1px solid rgba(22, 101, 52, 0.06);
+  color: $primary; font-size: 0.82rem;
+}
+
+.analyticsCardTitle {
+  flex: 1; font-weight: 600; color: $text; font-size: 0.85rem;
+}
+
+.analyticsCardBadge {
+  font-size: 0.75rem; color: $text-muted;
+  background: $bg-alt; padding: 2px 8px; border-radius: 20px;
+}
+
+.analyticsTableWrap {
+  overflow-x: auto;
+}
+
+.analyticsTable {
+  width: 100%; border-collapse: collapse; font-size: 0.78rem;
+
+  th, td {
+    padding: 6px 12px; text-align: left; white-space: nowrap;
+  }
+
+  thead th {
+    background: $bg-alt; color: $text-secondary;
+    font-weight: 600; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(22, 101, 52, 0.04);
+    transition: background 0.1s;
+
+    &:hover { background: rgba(22, 101, 52, 0.02); }
+  }
+
+  tbody td {
+    color: $text;
+  }
+}
+
+.analyticsCardMore {
+  padding: $space-2 $space-4;
+  border-top: 1px solid rgba(22, 101, 52, 0.06);
+  text-align: center;
+}
+
+.downloadLink {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.78rem; color: $primary-light;
+  text-decoration: none; transition: color 0.15s;
+
+  &:hover { text-decoration: underline; color: $primary; }
+}
+
+.errorBanner {
+  display: flex; align-items: center; gap: $space-3;
+  padding: $space-3 $space-4; margin-bottom: $space-4;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 8px; color: #991b1b; font-size: 0.85rem;
+}

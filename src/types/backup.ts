@@ -49,3 +49,19 @@ export interface TriggerResult {
   message: string
   timestamp: string
 }
+
+export interface AnalyticsJob {
+  id: string
+  name: string
+  input: string
+  output: string
+}
+
+export interface AnalyticsResult {
+  jobId: string
+  jobName: string
+  header: string[]
+  rows: string[][]
+  totalRows: number
+  lastRun: string | null
+}

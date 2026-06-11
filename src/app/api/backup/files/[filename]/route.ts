@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFilePreview } from "@/lib/data/backup";
+import { getFilePreview, getFileRaw } from "@/lib/data/backup";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ filename: string }> },
 ) {
   try {
     const { filename } = await params;
-    const searchParams = _request.nextUrl.searchParams;
+    const searchParams = request.nextUrl.searchParams;
+
+    const isDownload = searchParams.get("download") === "true";
+    if (isDownload) {
+      const csvText = await getFileRaw(filename);
+      return new NextResponse(csvText, {
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+        },
+      });
+    }
+
     const page = parseInt(searchParams.get("page") || "1", 10);
     const pageSize = parseInt(searchParams.get("pageSize") || "50", 10);
 

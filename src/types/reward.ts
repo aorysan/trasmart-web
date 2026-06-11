@@ -30,6 +30,7 @@ export interface RewardCategory {
 }
 
 export interface RewardData {
+  userId: string;
   currentPoints: number;
   rewards: RewardItem[];
   categories: RewardCategory[];

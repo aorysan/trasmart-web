@@ -108,19 +108,10 @@ const BackupContent = memo(function BackupContent({
 
   const handleDownload = useCallback(async (filename: string) => {
     try {
-      const res = await fetch(`/api/backup/files/${encodeURIComponent(filename)}?page=1&pageSize=999999`);
-      const json = await res.json();
-      if (!json.success) return;
-      const data = json.data as FilePreview;
-      const csvLines = [data.header.join(",")];
-      for (const row of data.rows) csvLines.push(row.join(","));
-      const blob = new Blob([csvLines.join("\n")], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = `/api/backup/files/${encodeURIComponent(filename)}?download=true`;
       a.download = filename;
       a.click();
-      URL.revokeObjectURL(url);
     } catch {
       // ignore
     }

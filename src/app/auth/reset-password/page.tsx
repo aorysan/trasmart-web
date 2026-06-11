@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/client";
 import styles from "./reset-password.module.scss";
-import { Eye, EyeOff, Lock, Recycle } from "lucide-react";
+import { Eye, EyeOff, Lock, Recycle, CircleAlert } from "lucide-react";
 
 const resetSchema = z
   .object({
@@ -47,7 +47,9 @@ export default function ResetPasswordPage() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        router.replace("/auth/login?error=Link+reset+tidak+valid+atau+sudah+kedaluwarsa");
+        router.replace(
+          "/auth/login?error=Link+reset+tidak+valid+atau+sudah+kedaluwarsa",
+        );
         return;
       }
       setChecking(false);
@@ -113,7 +115,7 @@ export default function ResetPasswordPage() {
           <>
             {serverError && (
               <div className={styles.errorBox} role="alert">
-                ⚠️ {serverError}
+                <CircleAlert size={16} /> {serverError}
               </div>
             )}
 
@@ -145,7 +147,9 @@ export default function ResetPasswordPage() {
                   </button>
                 </div>
                 {errors.password && (
-                  <span className={styles.fieldError}>{errors.password.message}</span>
+                  <span className={styles.fieldError}>
+                    {errors.password.message}
+                  </span>
                 )}
               </div>
 
@@ -175,7 +179,9 @@ export default function ResetPasswordPage() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <span className={styles.fieldError}>{errors.confirmPassword.message}</span>
+                  <span className={styles.fieldError}>
+                    {errors.confirmPassword.message}
+                  </span>
                 )}
               </div>
 

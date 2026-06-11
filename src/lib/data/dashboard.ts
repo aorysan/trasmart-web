@@ -88,17 +88,17 @@ async function fetchProfilePoints(
 async function fetchNextReward(
   supabase: SupabaseClient,
   totalPoints: number
-): Promise<RawReward | null> {
+): Promise<Pick<RawReward, "name" | "points_required"> | null> {
   const { data, error } = await supabase
     .from("rewards")
-    .select("*")
+    .select("name, points_required")
     .gt("points_required", totalPoints)
     .order("points_required", { ascending: true })
     .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(`fetchNextReward: ${error.message}`);
-  return data;
+  return data as Pick<RawReward, "name" | "points_required"> | null;
 }
 
 // Fetch semua transaksi bulan 
@@ -134,17 +134,17 @@ async function fetchMonthTransactions(
 
 async function fetchNearestMachine(
   supabase: SupabaseClient
-): Promise<RawMachine | null> {
+): Promise<Pick<RawMachine, "name" | "location_label" | "status" | "capacity_percent"> | null> {
   const { data, error } = await supabase
     .from("machines")
-    .select("*")
+    .select("name, location_label, status, capacity_percent")
     .eq("status", "online")
     .order("name", { ascending: true })
     .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(`fetchNearestMachine: ${error.message}`);
-  return data;
+  return data as Pick<RawMachine, "name" | "location_label" | "status" | "capacity_percent"> | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,15 +191,13 @@ export async function getDashboardData(
   userId: string,
   supabase: SupabaseClient
 ): Promise<DashboardData> {
-  const [profilePoints, monthTransactions, machine] = await Promise.all([
-    fetchProfilePoints(supabase, userId),
+  const [monthTransactions, machine, [totalPoints, nextReward]] = await Promise.all([
     fetchMonthTransactions(supabase, userId),
     fetchNearestMachine(supabase),
+    fetchProfilePoints(supabase, userId).then((points) =>
+      Promise.all([points, fetchNextReward(supabase, points)]),
+    ),
   ]);
-
-  const totalPoints = profilePoints;
-
-  const nextReward = await fetchNextReward(supabase, totalPoints);
 
   const threshold = nextReward?.points_required ?? 0;
   const progressPercent =
@@ -213,13 +211,16 @@ export async function getDashboardData(
     monthTransactions.filter((t) => toLocalDateStringWIB(t.created_at) === todayStr)
   );
 
-  // allTransactionsByDate:
   const allTransactionsByDate = new Map<string, HistoryEntry[]>();
   for (const t of monthTransactions) {
     const date = toLocalDateStringWIB(t.created_at);
     const entry = transactionsToHistoryEntries([t])[0];
-    const existing = allTransactionsByDate.get(date) ?? [];
-    allTransactionsByDate.set(date, [...existing, entry]);
+    const existing = allTransactionsByDate.get(date);
+    if (existing) {
+      existing.push(entry);
+    } else {
+      allTransactionsByDate.set(date, [entry]);
+    }
   }
 
   return {

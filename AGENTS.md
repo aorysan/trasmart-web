@@ -27,14 +27,14 @@
 ## Routing
 
 App pages live in route groups:
-- `src/app/(app)/{dashboard,account,reward}/` — authenticated pages
+- `src/app/(app)/{dashboard,account,reward,backup}/` — authenticated pages
 - `src/app/auth/{login,register,reset-password,callback}/` — auth pages
 
-Route groups are reflected directly in URLs (`/dashboard`, `/account`, etc.). When adding new pages, just create the directory under the appropriate route group — no rewrite needed. Update `src/middleware.ts` entries if the page should be protected.
+Route groups are reflected directly in URLs (`/dashboard`, `/account`, `/backup`, etc.). When adding new pages, just create the directory under the appropriate route group — no rewrite needed. Update `src/middleware.ts` entries if the page should be protected.
 
 ## Auth Middleware
 
-`src/middleware.ts` protects `/dashboard`, `/account`, `/reward`. Redirects authenticated users away from `/auth/*` and landing page `/`. The middleware `config.matcher` excludes `_next/*`, images, favicon, and `/api/*`.
+`src/middleware.ts` protects `/dashboard`, `/account`, `/reward`, `/backup`. Redirects authenticated users away from `/auth/*` and landing page `/`. The middleware `config.matcher` excludes `_next/*`, images, favicon, and `/api/*`.
 
 ## Supabase RPCs in Use
 
@@ -44,21 +44,37 @@ Route groups are reflected directly in URLs (`/dashboard`, `/account`, etc.). Wh
 | `refresh_session_expiry(p_machine_id)` | `src/app/api/machines/refresh/route.ts` + `IOT/src/main.cpp` |
 | `get_reward_usage_counts()` | `src/lib/data/reward.ts` |
 | `generate_machine_session(p_machine_id)` | `IOT/src/main.cpp` only |
+| `redeem_reward(p_user_id, p_reward_id)` | `src/lib/data/reward.ts` — atomic redemption (replaced 5 sequential queries) |
+
+## API Routes
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/machines/pair` | POST | Pair user with machine via session code |
+| `/api/machines/refresh` | POST | Refresh session expiry |
+| `/api/machines/session` | GET | Get current active session status |
+| `/api/backup/status` | GET | Backup status & HDFS connectivity |
+| `/api/backup/trigger` | POST | Trigger Supabase → HDFS backup |
+| `/api/backup/files` | GET | List all backup files (lightweight, skips row counting) |
+| `/api/backup/files/[filename]` | GET | Preview CSV file (paginated) or stream raw CSV (`?download=true`) |
 
 ## Key Directories
 
 | Path | Purpose |
 |---|---|
-| `src/app/(app)/` | Authenticated app pages (dashboard, account, reward) with `AuthGuard` + `SidebarProvider` layout |
+| `src/app/(app)/` | Authenticated app pages (dashboard, account, reward, backup) with `AuthGuard` + `SidebarProvider` layout |
 | `src/app/auth/` | Login, register, reset-password, OAuth callback |
-| `src/app/api/machines/` | Machine pairing (`/pair`) and session refresh (`/refresh`) |
+| `src/app/api/machines/` | Machine pairing, session refresh, session status |
+| `src/app/api/backup/` | HDFS backup: status, trigger, file listing, file preview/download |
 | `src/components/layout/` | AppSidebar, PageTopbar, NotificationBell, PairMachineModal |
 | `src/components/theme/` | `_tokens.scss` (design tokens) |
 | `src/contexts/` | UserContext, SidebarContext |
 | `src/hooks/` | `useAuth`, `useRealtimeTransactions` |
-| `src/lib/data/` | Business logic: dashboard, reward data |
+| `src/lib/data/` | Business logic: dashboard, reward, backup |
 | `src/lib/utils/supabase/` | Supabase client (browser), server, middleware |
-| `src/types/` | Dashboard & reward type definitions |
+| `src/types/` | Dashboard, reward, backup type definitions |
+| `scripts/` | Python ETL scripts (`export_to_hdfs.py`, `requirements.txt`) |
+| `docker/` | Docker Compose for Hadoop HDFS cluster (`docker-compose.yml`, `hadoop.env`) |
 | `IOT/` | **PlatformIO** ESP32 Arduino firmware (separate project) |
 
 ## IoT Firmware
@@ -75,5 +91,9 @@ Route groups are reflected directly in URLs (`/dashboard`, `/account`, etc.). Wh
 
 - **Styling:** SCSS Modules (`.module.scss`) for component styles; Tailwind utility classes in globals; theme tokens in `src/components/theme/_tokens.scss`
 - **Imports:** Always use `@/*` path alias (`@/components/...`, `@/lib/...`, etc.)
-- **`.env.local`** is gitignored (do NOT commit). Uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (modern `sb_publishable_*` format, not legacy anon key)
+- **`.env.local`** is gitignored (`.gitignore` has `.env*`). All Supabase keys are declared here and never committed:
+  - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — publishable/anon key for SSR clients (`sb_publishable_*` format)
+  - `SUPABASE_SERVICE_KEY` — service role key for server-only admin ops (e.g., `backup.ts`, Python ETL)
+- **Access syntax:** `process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (add `!` for non-null assertion in middleware/route handlers). Server-only vars (no `NEXT_PUBLIC_` prefix) are not available in browser code.
 - **No `date-fns` or `dayjs`** — use native `Intl` for date formatting in `Asia/Jakarta`

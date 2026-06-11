@@ -128,27 +128,24 @@ export async function getBackupStatus(): Promise<BackupStatus> {
   const totalSize = allFiles.reduce((s, f) => s + f.size, 0);
   const lastBackup = allFiles.length > 0 ? allFiles[0].modificationTime : null;
 
-  let hdfsTxnCount = 0;
-  let hdfsRedCount = 0;
+  async function countLines(dir: string, files: HdfsFileEntry[]): Promise<number> {
+    try {
+      const allPaths = files
+        .filter((f) => f.type === "FILE")
+        .map((f) => `${dir}/${f.pathSuffix}`);
+      if (allPaths.length === 0) return 0;
+      const output = await hdfsExec(["hdfs", "dfs", "-cat", ...allPaths]);
+      const lineCount = output.trim().split("\n").length;
+      return Math.max(lineCount - files.length, 0);
+    } catch {
+      return 0;
+    }
+  }
 
-  for (const f of txnFiles) {
-    try {
-      const content = await hdfsExec(["hdfs", "dfs", "-cat", `${BACKUP_DIR_TXN}/${f.pathSuffix}`]);
-      const { totalRows } = parseCsvRows(content, 1, 1);
-      hdfsTxnCount += totalRows;
-    } catch {
-      // skip
-    }
-  }
-  for (const f of redFiles) {
-    try {
-      const content = await hdfsExec(["hdfs", "dfs", "-cat", `${BACKUP_DIR_RED}/${f.pathSuffix}`]);
-      const { totalRows } = parseCsvRows(content, 1, 1);
-      hdfsRedCount += totalRows;
-    } catch {
-      // skip
-    }
-  }
+  const [hdfsTxnCount, hdfsRedCount] = await Promise.all([
+    countLines(BACKUP_DIR_TXN, txnFiles),
+    countLines(BACKUP_DIR_RED, redFiles),
+  ]);
 
   const supabaseTxnCount = await supabaseCount("transactions");
   const supabaseRedCount = await supabaseCount("user_redemptions");
@@ -169,8 +166,20 @@ export async function getBackupStatus(): Promise<BackupStatus> {
 }
 
 export async function getBackupFiles(): Promise<BackupFile[]> {
-  const status = await getBackupStatus();
-  return status.files;
+  try {
+    const [txnRaw, redRaw] = await Promise.all([
+      hdfsExec(["hdfs", "dfs", "-ls", BACKUP_DIR_TXN]),
+      hdfsExec(["hdfs", "dfs", "-ls", BACKUP_DIR_RED]),
+    ]);
+    const txnFiles = parseLsOutput(txnRaw);
+    const redFiles = parseLsOutput(redRaw);
+    return [
+      ...txnFiles.map((f) => ({ name: f.pathSuffix, size: f.length, modificationTime: new Date(f.modificationTime).toISOString() })),
+      ...redFiles.map((f) => ({ name: `redemptions/${f.pathSuffix}`, size: f.length, modificationTime: new Date(f.modificationTime).toISOString() })),
+    ].sort((a, b) => b.modificationTime.localeCompare(a.modificationTime));
+  } catch {
+    return [];
+  }
 }
 
 export async function getFilePreview(
@@ -196,6 +205,13 @@ export async function getFilePreview(
     header,
     rows,
   };
+}
+
+export async function getFileRaw(filename: string): Promise<string> {
+  const isRedemption = filename.startsWith("redemptions/");
+  const cleanName = isRedemption ? filename.slice("redemptions/".length) : filename;
+  const dir = isRedemption ? BACKUP_DIR_RED : BACKUP_DIR_TXN;
+  return hdfsExec(["hdfs", "dfs", "-cat", `${dir}/${cleanName}`]);
 }
 
 export async function triggerBackup(): Promise<TriggerResult> {

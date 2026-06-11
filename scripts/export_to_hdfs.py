@@ -1,13 +1,3 @@
-"""
-ETL: Export data from Supabase to HDFS (via docker exec).
-Usage:
-    python export_to_hdfs.py
-
-Environment variables:
-    SUPABASE_URL          (required)
-    SUPABASE_SERVICE_KEY  (required)
-"""
-
 import os
 import csv
 import io
@@ -15,6 +5,10 @@ import logging
 import subprocess
 import sys
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 import requests
 
@@ -25,8 +19,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://zvutdbjkfqstmlpxvqzh.supabase.co").rstrip("/")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2dXRkYmprZnFzdG1scHh2cXpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjIyNTcyNywiZXhwIjoyMDkxODAxNzI3fQ.yYAKtKpxGsZNME394x4jFPm8G9rC7Ad2bHqEQA98Y7A")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 HDFS_CONTAINER = "hadoop-namenode"
 
 BACKUP_DIR_TRANSACTIONS = "/backups/transactions"
@@ -52,7 +46,7 @@ def hdfs_cmd(*args, input_text=None):
         input=input_text,
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=60,
     )
     if result.returncode != 0:
         raise RuntimeError(f"hdfs cmd failed: {' '.join(cmd)}\n{result.stderr}")
@@ -68,11 +62,6 @@ def hdfs_write(path, data):
     dir_path = os.path.dirname(path)
     hdfs_cmd("hdfs", "dfs", "-mkdir", "-p", dir_path)
     hdfs_cmd("hdfs", "dfs", "-put", "-", path, input_text=data)
-    log.info("Wrote %d bytes to HDFS: %s", len(data.encode("utf-8")), path)
-
-
-def hdfs_read(path):
-    return hdfs_cmd("hdfs", "dfs", "-cat", path)
 
 
 def hdfs_list(path):
@@ -95,121 +84,131 @@ def hdfs_list(path):
     return files
 
 
-def hdfs_count_lines(file_path):
-    try:
-        output = hdfs_cmd("hdfs", "dfs", "-cat", file_path)
-        lines = output.strip().split("\n")
-        return max(len(lines) - 1, 0)
-    except Exception:
-        return 0
+def get_last_backup_time(dir_path):
+    """Find the latest backup timestamp from existing HDFS files."""
+    files = hdfs_list(dir_path)
+    if not files:
+        return None
+    timestamps = []
+    for f in files:
+        stamp = f["pathSuffix"].replace(".csv", "")
+        try:
+            ts = datetime.strptime(stamp, "%Y-%m-%d_%H%M%S")
+            timestamps.append(ts)
+        except ValueError:
+            continue
+    if not timestamps:
+        return None
+    return max(timestamps)
 
 
-def fetch_supabase_all(table, select="*", order="created_at"):
-    log.info("Fetching all rows from Supabase: %s", table)
-    rows = []
-    start = 0
+def stream_supabase(table, select="*", order="created_at", since=None, since_col="created_at"):
+    """Stream rows from Supabase, optionally filtering by since_col >= since."""
+    log.info("Streaming from Supabase: %s (since=%s)", table, since or "beginning")
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Accept": "application/json",
     }
-    url = f"{SUPABASE_URL}/rest/v1/{table}?select={select}&order={order}&limit={PAGE_SIZE}"
+    params = f"select={select}&order={order}&limit={PAGE_SIZE}"
+    if since:
+        since_iso = since.strftime("%Y-%m-%dT%H:%M:%SZ") if hasattr(since, "strftime") else since
+        params += f"&{since_col}=gte.{since_iso}"
+    base_url = f"{SUPABASE_URL}/rest/v1/{table}?{params}"
 
+    start = 0
+    total = 0
     while True:
         range_start = start
         range_end = start + PAGE_SIZE - 1
         headers["Range"] = f"{range_start}-{range_end}"
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(base_url, headers=headers)
         if resp.status_code == 416:
             break
         resp.raise_for_status()
         batch = resp.json()
         if not batch:
             break
-        rows.extend(batch)
-        log.info("  Fetched %d rows (total: %d)", len(batch), len(rows))
+        for row in batch:
+            yield row
+            total += 1
+        log.info("  Streamed %d rows from %s (total: %d)", len(batch), table, total)
         start += PAGE_SIZE
 
-    return rows
 
+def stream_write_csv(dir_path, filename, columns, row_iter):
+    """Write CSV rows to HDFS incrementally without accumulating all in memory."""
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(columns)
 
-def supabase_count(table):
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Accept": "application/json",
-        "Prefer": "count=exact",
-    }
-    url = f"{SUPABASE_URL}/rest/v1/{table}?select=id&limit=0"
-    resp = requests.get(url, headers=headers)
-    resp.raise_for_status()
-    count = resp.headers.get("content-range", "*/0").split("/")[-1]
-    return int(count)
+    count = 0
+    for row in row_iter:
+        writer.writerow(row)
+        count += 1
+
+    path = f"{dir_path}/{filename}"
+    hdfs_write(path, buf.getvalue())
+    return count
 
 
 def get_today_stamp():
     return datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
 
 
-def export_transactions(transactions):
-    stamp = get_today_stamp()
-    path = f"{BACKUP_DIR_TRANSACTIONS}/{stamp}.csv"
-    columns = [
-        "id", "user_id", "category_id", "machine_id",
-        "poin", "created_at", "status",
-    ]
-    rows = []
-    for t in transactions:
-        rows.append([
-            t.get("id", ""),
-            t.get("user_id", ""),
-            t.get("category_id", ""),
-            t.get("machine_id", "") or "",
-            str(t.get("poin", 0)),
-            t.get("created_at", ""),
-            t.get("status", ""),
-        ])
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(columns)
-    writer.writerows(rows)
-    hdfs_write(path, buf.getvalue())
-    return len(rows)
-
-
-def export_redemptions(redemptions):
-    stamp = get_today_stamp()
-    path = f"{BACKUP_DIR_REDEMPTIONS}/{stamp}.csv"
-    columns = ["id", "user_id", "reward_id", "redeemed_at"]
-    rows = []
-    for r in redemptions:
-        rows.append([
-            r.get("id", ""),
-            r.get("user_id", ""),
-            r.get("reward_id", ""),
-            r.get("redeemed_at", "") or "",
-        ])
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(columns)
-    writer.writerows(rows)
-    hdfs_write(path, buf.getvalue())
-    return len(rows)
-
-
 def main():
     check_env()
-    log.info("Starting Supabase → HDFS backup")
+    log.info("Starting Supabase -> HDFS backup")
     log.info("Supabase URL: %s", SUPABASE_URL)
 
     hdfs_mkdir(BACKUP_DIR_TRANSACTIONS)
     hdfs_mkdir(BACKUP_DIR_REDEMPTIONS)
 
-    transactions = fetch_supabase_all("transactions")
-    redemptions = fetch_supabase_all("user_redemptions", order="redeemed_at")
+    # Incremental: find last backup time
+    last_txn = get_last_backup_time(BACKUP_DIR_TRANSACTIONS)
+    last_red = get_last_backup_time(BACKUP_DIR_REDEMPTIONS)
 
-    txn_count = export_transactions(transactions)
-    red_count = export_redemptions(redemptions)
+    txn_columns = [
+        "id", "user_id", "category_id", "machine_id",
+        "poin", "created_at", "status",
+    ]
+    red_columns = ["id", "user_id", "reward_id", "redeemed_at"]
+
+    if last_txn:
+        log.info("Incremental transactions backup since: %s", last_txn.isoformat())
+    else:
+        log.info("Full transactions backup (no previous data)")
+
+    if last_red:
+        log.info("Incremental redemptions backup since: %s", last_red.isoformat())
+    else:
+        log.info("Full redemptions backup (no previous data)")
+
+    stamp = get_today_stamp()
+
+    def txn_rows():
+        for t in stream_supabase("transactions", since=last_txn):
+            yield [
+                t.get("id", ""),
+                t.get("user_id", ""),
+                t.get("category_id", ""),
+                t.get("machine_id", "") or "",
+                str(t.get("poin", 0)),
+                t.get("created_at", ""),
+                t.get("status", ""),
+            ]
+
+    def red_rows():
+        for r in stream_supabase("user_redemptions", order="redeemed_at", since=last_red, since_col="redeemed_at"):
+            yield [
+                r.get("id", ""),
+                r.get("user_id", ""),
+                r.get("reward_id", ""),
+                r.get("redeemed_at", "") or "",
+            ]
+
+    txn_count = stream_write_csv(BACKUP_DIR_TRANSACTIONS, f"{stamp}.csv", txn_columns, txn_rows())
+    red_count = stream_write_csv(BACKUP_DIR_REDEMPTIONS, f"{stamp}.csv", red_columns, red_rows())
 
     log.info("Backup complete: %d transactions, %d redemptions written to HDFS", txn_count, red_count)
 

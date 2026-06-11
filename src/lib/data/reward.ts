@@ -1,7 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/utils/supabase/client";
 import type {
   RawReward,
-  // RawUserRedemptionWithReward,
   RedeemedRewardItem,
   RewardCategory,
   RewardData,
@@ -75,31 +75,12 @@ function normalizeRewardImage(imageUrl: string | null): string {
   const compact = imageUrl.trim();
   if (compact.length <= 3) return compact;
 
-  return "🎁";
-}
-
-function getJakartaDateTimeString(date = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-
-  const values = Object.fromEntries(
-    parts.map((part) => [part.type, part.value]),
-  ) as Record<string, string>;
-
-  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}+07:00`;
+  return imageUrl;
 }
 
 async function fetchProfilePoints(
   userId: string,
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
 ): Promise<number> {
   const { data, error } = await supabase
     .from("profiles")
@@ -115,7 +96,7 @@ async function fetchProfilePoints(
 }
 
 async function fetchRewards(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
 ): Promise<RawReward[]> {
   const { data, error } = await supabase
     .from("rewards")
@@ -130,7 +111,7 @@ async function fetchRewards(
 }
 
 async function fetchRewardUsageMap(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
 ): Promise<Map<string, number>> {
   const { data, error } = await supabase.rpc("get_reward_usage_counts");
 
@@ -148,7 +129,7 @@ async function fetchRewardUsageMap(
 
 async function fetchRedeemedRewards(
   userId: string,
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
 ): Promise<RedeemedRewardItem[]> {
   const { data, error } = await supabase
     .from("user_redemptions")
@@ -221,19 +202,23 @@ function buildCategories(rewards: RewardItem[]): RewardCategory[] {
   ];
 }
 
-export async function getRewardData(userId: string): Promise<RewardData> {
-  const supabase = createClient();
+export async function getRewardData(
+  userId: string,
+  supabase?: SupabaseClient,
+): Promise<RewardData> {
+  const client = supabase ?? createClient();
 
   const [currentPoints, rawRewards, usageMap, redeemedRewards] = await Promise.all([
-    fetchProfilePoints(userId, supabase),
-    fetchRewards(supabase),
-    fetchRewardUsageMap(supabase),
-    fetchRedeemedRewards(userId, supabase),
+    fetchProfilePoints(userId, client),
+    fetchRewards(client),
+    fetchRewardUsageMap(client),
+    fetchRedeemedRewards(userId, client),
   ]);
 
   const rewards = rawRewards.map((raw) => toRewardItem(raw, usageMap));
 
   return {
+    userId,
     currentPoints,
     rewards,
     categories: buildCategories(rewards),
@@ -247,76 +232,38 @@ export async function redeemReward(
 ): Promise<RedeemResult> {
   const supabase = createClient();
 
-  const currentPoints = await fetchProfilePoints(userId, supabase);
-
-  const { data: reward, error: rewardError } = await supabase
-    .from("rewards")
-    .select("id, name, description, points_required, quantity, image_url")
-    .eq("id", rewardId)
-    .maybeSingle();
-
-  if (rewardError) {
-    throw new Error(`redeemReward: ${rewardError.message}`);
-  }
-
-  if (!reward) {
-    throw new Error("Reward tidak ditemukan");
-  }
-
-  const { count, error: usageError } = await supabase
-    .from("user_redemptions")
-    .select("id", { count: "exact", head: true })
-    .eq("reward_id", reward.id);
-
-  if (usageError) {
-    throw new Error(`redeemReward usage: ${usageError.message}`);
-  }
-
-  const used = count ?? 0;
-  const available = Math.max((reward.quantity ?? 0) - used, 0);
-
-  if (available <= 0) {
-    throw new Error("Reward habis");
-  }
-
-  if (currentPoints < (reward.points_required ?? 0)) {
-    throw new Error("Poin tidak cukup");
-  }
-
-  const { error: insertError } = await supabase.from("user_redemptions").insert({
-    user_id: userId,
-    reward_id: reward.id,
-    redeemed_at: getJakartaDateTimeString(),
+  const { data, error } = await supabase.rpc("redeem_reward", {
+    p_user_id: userId,
+    p_reward_id: rewardId,
   });
 
-  if (insertError) {
-    throw new Error(`redeemReward insert: ${insertError.message}`);
+  if (error) {
+    throw new Error(error.message);
   }
 
-  const nextPoints = Math.max(currentPoints - (reward.points_required ?? 0), 0);
+  const result = data as {
+    reward_name: string;
+    reward_description: string;
+    reward_image_url: string | null;
+    points_required: number;
+    points_after: number;
+    available_after: number;
+    redeemed_at: string;
+  };
 
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({ points: nextPoints })
-    .eq("id", userId);
-
-  if (profileError) {
-    throw new Error(`redeemReward profile update: ${profileError.message}`);
-  }
-
-  const redeemedAt = getJakartaDateTimeString();
+  const redeemedAt = new Date(result.redeemed_at).toISOString();
 
   return {
-    rewardName: reward.name,
-    pointsAfter: nextPoints,
-    availableAfter: Math.max(available - 1, 0),
+    rewardName: result.reward_name,
+    pointsAfter: result.points_after,
+    availableAfter: result.available_after,
     redeemedReward: {
-      id: `local-${reward.id}-${redeemedAt}`,
-      rewardId: reward.id,
-      name: reward.name,
-      description: reward.description ?? "Reward berhasil ditukar",
-      points: reward.points_required ?? 0,
-      image: normalizeRewardImage(reward.image_url ?? null),
+      id: `local-${rewardId}-${redeemedAt}`,
+      rewardId,
+      name: result.reward_name,
+      description: result.reward_description ?? "Reward berhasil ditukar",
+      points: result.points_required,
+      image: normalizeRewardImage(result.reward_image_url),
       redeemedAt,
     },
   };

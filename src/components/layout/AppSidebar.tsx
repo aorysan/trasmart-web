@@ -8,7 +8,7 @@ import {
   LogOut,
   Menu,
   BaggageClaim,
-  HardDrive,
+  // HardDrive,
 } from "lucide-react";
 import styles from "./AppSidebar.module.scss";
 import { usePathname } from "next/navigation";
@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard size={20} />,
   },
   { name: "Reward", path: "/reward", icon: <BaggageClaim size={20} /> },
-  { name: "Backup", path: "/dashboard/backup", icon: <HardDrive size={20} /> },
+  // { name: "Backup", path: "/dashboard/backup", icon: <HardDrive size={20} /> },
   { name: "Account", path: "/account", icon: <User size={20} /> },
 ];
 

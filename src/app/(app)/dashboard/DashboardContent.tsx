@@ -24,7 +24,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import styles from "./dashboard.module.scss";
-import type { HistoryEntry, HistoryIconVariant, RawTransaction } from "@/types/dashboard";
+import type { HistoryEntry, HistoryIconVariant } from "@/types/dashboard";
 import dynamic from "next/dynamic";
 import PairMachineModal from "@/components/layout/PairMachineModal";
 
@@ -605,7 +605,9 @@ const DashboardContent = memo(function DashboardContent({
                   <button
                     type="button"
                     className={styles.historyPageBtn}
-                    onClick={() => setHistoryPage((p) => Math.min(p + 1, historyTotalPages))}
+                    onClick={() =>
+                      setHistoryPage((p) => Math.min(p + 1, historyTotalPages))
+                    }
                     disabled={clampedHistoryPage === historyTotalPages}
                   >
                     Berikutnya

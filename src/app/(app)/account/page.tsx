@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,7 +22,6 @@ import {
 import styles from "./account.module.scss";
 import { useUser } from "@/contexts/UserContext";
 import type { UserProfile } from "@/hooks/useAuth";
-import { createClient } from "@/lib/utils/supabase/client";
 import PageTopbar from "@/components/layout/PageTopbar";
 
 const profileSchema = z.object({
@@ -57,14 +56,11 @@ export default function AccountRoute() {
   const [isEditing, setIsEditing] = useState(false);
   const { user, loading, error, updateUser, signOut, changePassword } =
     useUser();
-  const [pointBalance, setPointBalance] = useState(0);
-  const [pointError, setPointError] = useState<string | null>(null);
+  const pointBalance = user?.points ?? 0;
   const [toast, setToast] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-  const userIdRef = useRef<string | null>(null);
-  userIdRef.current = user?.id ?? null;
 
   // State modal Change Password
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -89,58 +85,6 @@ export default function AccountRoute() {
   const passwordForm = useForm<ChangePasswordForm>({
     resolver: zodResolver(changePasswordSchema),
   });
-
-  const loadPoints = useCallback(async (signal?: AbortSignal) => {
-    const uid = userIdRef.current;
-    if (!uid) return;
-    try {
-      setPointError(null);
-      const supabase = createClient();
-      await supabase.auth.getSession();
-      const { data, error: fetchErr } = await supabase
-        .from("profiles")
-        .select("points")
-        .eq("id", uid)
-        .maybeSingle();
-      if (fetchErr) throw new Error(fetchErr.message);
-      if (signal?.aborted) return;
-      setPointBalance(data?.points ?? 0);
-    } catch (err) {
-      if (signal?.aborted) return;
-      setPointError(err instanceof Error ? err.message : "Gagal memuat poin");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const abort = new AbortController();
-    let mounted = true;
-    let focusTimer: ReturnType<typeof setTimeout> | null = null;
-
-    void loadPoints(abort.signal);
-
-    const handleActivityChanged = () => {
-      void loadPoints(abort.signal);
-    };
-    const handleFocus = () => {
-      if (focusTimer) clearTimeout(focusTimer);
-      focusTimer = setTimeout(() => {
-        if (mounted) void loadPoints(abort.signal);
-      }, 2000);
-    };
-    window.addEventListener("trasmart:activity-changed", handleActivityChanged);
-    window.addEventListener("focus", handleFocus);
-    return () => {
-      mounted = false;
-      abort.abort();
-      if (focusTimer) clearTimeout(focusTimer);
-      window.removeEventListener(
-        "trasmart:activity-changed",
-        handleActivityChanged,
-      );
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [user?.id, loadPoints]);
 
   const handleEdit = () => setIsEditing(true);
 
@@ -490,7 +434,6 @@ export default function AccountRoute() {
               <span className={styles.pointsValue}>{pointBalance}</span>
               <span className={styles.pointsUnit}>Pts</span>
             </div>
-            {pointError && <p className={styles.pointsError}>{pointError}</p>}
           </div>
 
           <div className={styles.actionsCard}>

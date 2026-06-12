@@ -215,13 +215,13 @@ export default function RewardContent({ initialData }: RewardContentProps) {
             {redeemedTotalPages > 1 && (
               <div className={styles.redeemedPagination}>
                 <button type="button" className={styles.redeemedPageBtn} onClick={() => setRedeemedPage((prev) => Math.max(prev - 1, 1))} disabled={clampedRedeemedPage === 1}>
-                  Sebelumnya
+                  &lt;
                 </button>
                 <div className={styles.redeemedPageInfo}>
                   Halaman {clampedRedeemedPage} dari {redeemedTotalPages}
                 </div>
                 <button type="button" className={styles.redeemedPageBtn} onClick={() => setRedeemedPage((prev) => Math.min(prev + 1, redeemedTotalPages))} disabled={clampedRedeemedPage === redeemedTotalPages}>
-                  Berikutnya
+                  &gt;
                 </button>
               </div>
             )}

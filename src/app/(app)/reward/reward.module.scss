@@ -815,12 +815,12 @@
   background: var(--color-surface);
   color: var(--color-text);
   border-radius: var(--radius-md);
-  padding: 0.65rem 1rem;
+  padding: 0.45rem 0.75rem;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 44px;
+  min-height: 36px;
 
   &:hover:not(:disabled) {
     border-color: var(--color-primary);
@@ -842,7 +842,7 @@
 
 .redeemedPageInfo {
   flex: 1;
-  min-width: 180px;
+  min-width: 140px;
   text-align: center;
   color: var(--color-text-secondary);
   font-size: 0.85rem;

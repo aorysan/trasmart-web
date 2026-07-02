@@ -60,7 +60,7 @@ for job in "${JOBS[@]}"; do
     user_points)   header="user_id,total_poin" ;;
     daily_count)   header="tanggal,jumlah_transaksi" ;;
     category_rank) header="category_id,total_poin" ;;
-    reward_rank)   header="reward_id,total_redeem" ;;  /* total redemptions ever */
+    reward_rank)   header="reward_id,total_redeem" ;;  # total redemptions ever
     machine_usage) header="machine_id,jumlah_pakai" ;;
   esac
 
